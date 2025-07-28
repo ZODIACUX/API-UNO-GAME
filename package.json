@@ -1,0 +1,39 @@
+{
+  "name": "game-management-api",
+  "version": "1.0.0",
+  "description": "API para gestión de juegos con arquitectura de tres capas",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "typeorm": "^0.3.17",
+    "reflect-metadata": "^0.1.13",
+    "mysql2": "^3.6.0",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "express-rate-limit": "^6.8.1",
+    "joi": "^17.9.2",
+    "uuid": "^9.0.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "api",
+    "game",
+    "management",
+    "nodejs",
+    "express",
+    "typeorm",
+    "mysql"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
