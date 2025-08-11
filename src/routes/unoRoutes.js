@@ -6,10 +6,10 @@ const {
   registerUserSchema,
   loginUserSchema,
   logoutUserSchema,
-  createUnoGameSchema,
-  joinGameSchema,
+  profileSchema,
+  createGameSchema,
   gameActionSchema,
-  gameIdSchema
+  gameIdOnlySchema
 } = require('../validation/unoSchemas');
 
 const router = Router();
@@ -25,14 +25,13 @@ router.post('/login', validateRequest(loginUserSchema), unoController.loginUser)
 router.post('/logout', validateRequest(logoutUserSchema), unoController.logoutUser);
 
 // 4. Obtener perfil (requiere autenticación)
-router.get('/profile', authenticateToken, unoController.getUserProfile);
-router.post('/profile', authenticateToken, unoController.getUserProfile); // Para compatibilidad con body
+router.post('/profile', authenticateToken, unoController.getUserProfile);
 
 // 5. Crear juego (requiere autenticación)
 router.post('/game/create', authenticateToken, unoController.createGame);
 
 // 6. Unirse a juego (requiere autenticación)
-router.post('/game/join', authenticateToken, validateRequest(joinGameSchema), unoController.joinGame);
+router.post('/game/join', authenticateToken, validateRequest(gameActionSchema), unoController.joinGame);
 
 // 7. Iniciar juego (requiere autenticación)
 router.post('/game/start', authenticateToken, validateRequest(gameActionSchema), unoController.startGame);
@@ -43,19 +42,19 @@ router.post('/game/leave', authenticateToken, validateRequest(gameActionSchema),
 // 9. Finalizar juego (requiere autenticación)
 router.post('/game/end', authenticateToken, validateRequest(gameActionSchema), unoController.endGame);
 
-// 10. Obtener estado del juego
-router.post('/game/state', validateRequest(gameIdSchema), unoController.getGameState);
+// 10. Obtener estado del juego (NO requiere autenticación según spec)
+router.post('/game/state', validateRequest(gameIdOnlySchema), unoController.getGameState);
 
-// 11. Obtener jugadores del juego
-router.post('/game/players', validateRequest(gameIdSchema), unoController.getGamePlayers);
+// 11. Obtener jugadores del juego (NO requiere autenticación según spec)
+router.post('/game/players', validateRequest(gameIdOnlySchema), unoController.getGamePlayers);
 
-// 12. Obtener jugador actual
-router.post('/game/current-player', validateRequest(gameIdSchema), unoController.getCurrentPlayer);
+// 12. Obtener jugador actual (NO requiere autenticación según spec)
+router.post('/game/current-player', validateRequest(gameIdOnlySchema), unoController.getCurrentPlayer);
 
-// 13. Obtener carta superior
-router.post('/game/top-card', validateRequest(gameIdSchema), unoController.getTopCard);
+// 13. Obtener carta superior (NO requiere autenticación según spec)
+router.post('/game/top-card', validateRequest(gameIdOnlySchema), unoController.getTopCard);
 
-// 14. Obtener puntuaciones
-router.post('/game/scores', validateRequest(gameIdSchema), unoController.getScores);
+// 14. Obtener puntuaciones (NO requiere autenticación según spec)
+router.post('/game/scores', validateRequest(gameIdOnlySchema), unoController.getScores);
 
 module.exports = router;

@@ -4,9 +4,9 @@ const databaseConfig = {
   development: {
     type: "mysql",
     host: process.env.DB_HOST || "localhost",
-    port: parseInt(process.env.DB_PORT) || 3306,
+    port: parseInt(process.env.DB_PORT) || 3319,
     username: process.env.DB_USERNAME || "root",
-    password: process.env.DB_PASSWORD || "",
+    password: process.env.DB_PASSWORD || "rootpasword",
     database: process.env.DB_NAME || "game_management",
     synchronize: true, // Solo para desarrollo
     logging: process.env.LOG_LEVEL === 'debug',
@@ -18,7 +18,7 @@ const databaseConfig = {
   production: {
     type: "mysql",
     host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT) || 3306,
+    port: parseInt(process.env.DB_PORT) || 3319,
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,

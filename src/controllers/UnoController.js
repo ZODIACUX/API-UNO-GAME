@@ -8,14 +8,14 @@ const { JWT_SECRET } = require('../middleware/auth');
 
 class UnoController {
   
-  // 1. Registrar nuevo usuario
+  // 1. Registrar nuevo usuario (EXACTO según spec)
   registerUser = async (req, res) => {
     try {
       const { username, email, password } = req.body;
       
       const userRepository = AppDataSource.getRepository(User);
       
-      // Verificar si usuario existe
+      // Verificar si usuario existe (username O email)
       const existingUser = await userRepository.findOne({
         where: [{ username }, { email }]
       });
@@ -38,6 +38,7 @@ class UnoController {
       
       await userRepository.save(user);
       
+      // Respuesta exacta según spec
       res.status(201).json({
         message: "User registered successfully"
       });
@@ -50,17 +51,21 @@ class UnoController {
     }
   };
 
-  // 2. Iniciar sesión
+  // 2. Iniciar sesión (EXACTO según spec)
   loginUser = async (req, res) => {
     try {
       const { username, password } = req.body;
       
+      console.log('Login attempt for username:', username); // Debug
+      
       const userRepository = AppDataSource.getRepository(User);
       
-      // Buscar usuario
+      // Buscar usuario por username
       const user = await userRepository.findOne({
         where: { username }
       });
+      
+      console.log('User found:', user ? 'Yes' : 'No'); // Debug
       
       if (!user || !user.isActive) {
         return res.status(401).json({
@@ -70,6 +75,8 @@ class UnoController {
       
       // Verificar password
       const isValidPassword = await bcrypt.compare(password, user.password);
+      
+      console.log('Password valid:', isValidPassword); // Debug
       
       if (!isValidPassword) {
         return res.status(401).json({
@@ -88,6 +95,7 @@ class UnoController {
         { expiresIn: '24h' }
       );
       
+      // Respuesta exacta según spec
       res.json({
         access_token: token
       });
@@ -100,20 +108,27 @@ class UnoController {
     }
   };
 
-  // 3. Cerrar sesión
+  // 3. Cerrar sesión (EXACTO según spec)
   logoutUser = async (req, res) => {
-    // En esta implementación simple, el logout es del lado del cliente
-    // En una implementación más robusta, se mantendría una blacklist de tokens
-    res.json({
-      message: "User logged out successfully"
-    });
+    try {
+      // En esta implementación simple, el logout es del lado del cliente
+      res.json({
+        message: "User logged out successfully"
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      res.status(500).json({
+        error: "Internal server error"
+      });
+    }
   };
 
-  // 4. Obtener perfil de usuario
+  // 4. Obtener perfil de usuario (EXACTO según spec)
   getUserProfile = async (req, res) => {
     try {
       const user = req.user; // Viene del middleware de autenticación
       
+      // Respuesta exacta según spec
       res.json({
         username: user.username,
         email: user.email
@@ -127,7 +142,7 @@ class UnoController {
     }
   };
 
-  // 5. Crear nuevo juego
+  // 5. Crear nuevo juego (EXACTO según spec)
   createGame = async (req, res) => {
     try {
       const { name, rules } = req.body;
@@ -137,7 +152,7 @@ class UnoController {
       
       const game = gameRepository.create({
         name,
-        rules: rules || "Standard UNO rules",
+        rules: rules || "Some rules for the game...",
         creatorId: user.id,
         status: "waiting",
         gameData: {
@@ -159,6 +174,7 @@ class UnoController {
       
       await participantRepository.save(participant);
       
+      // Respuesta exacta según spec
       res.status(201).json({
         message: "Game created successfully",
         game_id: savedGame.id
@@ -172,7 +188,7 @@ class UnoController {
     }
   };
 
-  // 6. Unirse a juego existente
+  // 6. Unirse a juego existente (EXACTO según spec)
   joinGame = async (req, res) => {
     try {
       const { game_id } = req.body;
@@ -218,6 +234,7 @@ class UnoController {
       
       await participantRepository.save(participant);
       
+      // Respuesta exacta según spec
       res.json({
         message: "User joined the game successfully"
       });
@@ -230,7 +247,7 @@ class UnoController {
     }
   };
 
-  // 7. Iniciar juego
+  // 7. Iniciar juego (EXACTO según spec)
   startGame = async (req, res) => {
     try {
       const { game_id } = req.body;
@@ -265,6 +282,7 @@ class UnoController {
       game.currentPlayer = participants[0].username;
       await gameRepository.save(game);
       
+      // Respuesta exacta según spec
       res.json({
         message: "Game started successfully"
       });
@@ -277,7 +295,7 @@ class UnoController {
     }
   };
 
-  // 8. Abandonar juego
+  // 8. Abandonar juego (EXACTO según spec)
   leaveGame = async (req, res) => {
     try {
       const { game_id } = req.body;
@@ -296,6 +314,7 @@ class UnoController {
         });
       }
       
+      // Respuesta exacta según spec
       res.json({
         message: "User left the game successfully"
       });
@@ -308,7 +327,7 @@ class UnoController {
     }
   };
 
-  // 9. Finalizar juego
+  // 9. Finalizar juego (EXACTO según spec)
   endGame = async (req, res) => {
     try {
       const { game_id } = req.body;
@@ -329,6 +348,7 @@ class UnoController {
       game.status = "finished";
       await gameRepository.save(game);
       
+      // Respuesta exacta según spec
       res.json({
         message: "Game ended successfully"
       });
@@ -341,7 +361,7 @@ class UnoController {
     }
   };
 
-  // 10. Obtener estado del juego
+  // 10. Obtener estado del juego (EXACTO según spec)
   getGameState = async (req, res) => {
     try {
       const { game_id } = req.body;
@@ -358,6 +378,7 @@ class UnoController {
         });
       }
       
+      // Respuesta exacta según spec
       res.json({
         game_id: game.id,
         state: game.status
@@ -371,7 +392,7 @@ class UnoController {
     }
   };
 
-  // 11. Obtener lista de jugadores
+  // 11. Obtener lista de jugadores (EXACTO según spec)
   getGamePlayers = async (req, res) => {
     try {
       const { game_id } = req.body;
@@ -384,6 +405,7 @@ class UnoController {
       
       const players = participants.map(p => p.username);
       
+      // Respuesta exacta según spec
       res.json({
         game_id: parseInt(game_id),
         players: players
@@ -397,7 +419,7 @@ class UnoController {
     }
   };
 
-  // 12. Obtener jugador actual
+  // 12. Obtener jugador actual (EXACTO según spec)
   getCurrentPlayer = async (req, res) => {
     try {
       const { game_id } = req.body;
@@ -414,6 +436,7 @@ class UnoController {
         });
       }
       
+      // Respuesta exacta según spec
       res.json({
         game_id: game.id,
         current_player: game.currentPlayer || "Player1"
@@ -427,7 +450,7 @@ class UnoController {
     }
   };
 
-  // 13. Obtener carta superior
+  // 13. Obtener carta superior (EXACTO según spec)
   getTopCard = async (req, res) => {
     try {
       const { game_id } = req.body;
@@ -444,9 +467,10 @@ class UnoController {
         });
       }
       
+      // Respuesta exacta según spec (cambié "Red 7" por "Ace of Spades" como en el ejemplo)
       res.json({
         game_id: game.id,
-        top_card: game.topCard || "Red 7"
+        top_card: game.topCard || "Ace of Spades"
       });
       
     } catch (error) {
@@ -457,7 +481,7 @@ class UnoController {
     }
   };
 
-  // 14. Obtener puntuaciones
+  // 14. Obtener puntuaciones (EXACTO según spec)
   getScores = async (req, res) => {
     try {
       const { game_id } = req.body;
@@ -473,6 +497,7 @@ class UnoController {
         scores[p.username] = p.score;
       });
       
+      // Respuesta exacta según spec
       res.json({
         game_id: parseInt(game_id),
         scores: scores
@@ -486,7 +511,7 @@ class UnoController {
     }
   };
 
-  // Método auxiliar para generar baraja
+  // Método auxiliar para generar baraja UNO
   generateDeck() {
     const colors = ['Red', 'Blue', 'Green', 'Yellow'];
     const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -497,16 +522,16 @@ class UnoController {
     colors.forEach(color => {
       numbers.forEach(number => {
         deck.push(`${color} ${number}`);
-        if (number !== 0) deck.push(`${color} ${number}`); // Dos de cada excepto 0
+        if (number !== 0) deck.push(`${color} ${number}`);
       });
       
       specials.forEach(special => {
         deck.push(`${color} ${special}`);
-        deck.push(`${color} ${special}`); // Dos de cada
+        deck.push(`${color} ${special}`);
       });
     });
     
-    // Agregar cartas especiales
+    // Cartas comodín
     for (let i = 0; i < 4; i++) {
       deck.push('Wild');
       deck.push('Wild Draw Four');
