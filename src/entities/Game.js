@@ -1,57 +1,60 @@
-const { EntitySchema } = require("typeorm");
+const { DataTypes } = require('sequelize');
 
-const Game = new EntitySchema({
-  name: "Game",
-  tableName: "games",
-  columns: {
+module.exports = (sequelize) => {
+  const Game = sequelize.define('Game', {
     id: {
-      primary: true,
-      type: "varchar",
-      generated: "uuid"
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
     },
     name: {
-      type: "varchar",
-      length: 100
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      validate: {
+        len: [1, 100],
+        notEmpty: true
+      }
     },
-    description: {
-      type: "text"
+    rules: {
+      type: DataTypes.TEXT,
+      allowNull: true
     },
-    category: {
-      type: "varchar",
-      length: 50
+    status: {
+      type: DataTypes.ENUM('waiting', 'in_progress', 'finished'),
+      defaultValue: 'waiting'
     },
-    minPlayers: {
-      type: "int",
-      default: 1
+    currentPlayerId: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    direction: {
+      type: DataTypes.ENUM('clockwise', 'counterclockwise'),
+      defaultValue: 'clockwise'
+    },
+    topCard: {
+      type: DataTypes.JSON,
+      allowNull: true
+    },
+    creatorId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id'
+      }
     },
     maxPlayers: {
-      type: "int",
-      default: 10
-    },
-    difficulty: {
-      type: "int",
-      default: 0
-    },
-    isActive: {
-      type: "boolean",
-      default: true
-    },
-    createdAt: {
-      type: "timestamp",
-      createDate: true
-    },
-    updatedAt: {
-      type: "timestamp",
-      updateDate: true
+      type: DataTypes.INTEGER,
+      defaultValue: 4,
+      validate: {
+        min: 2,
+        max: 10
+      }
     }
-  },
-  relations: {
-    scores: {
-      type: "one-to-many",
-      target: "Score",
-      inverseSide: "game"
-    }
-  }
-});
+  }, {
+    tableName: 'games',
+    timestamps: true
+  });
 
-module.exports = { Game };
+  return Game;
+};
