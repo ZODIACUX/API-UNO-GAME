@@ -1,45 +1,71 @@
-const { EntitySchema } = require("typeorm");
+const { DataTypes } = require('sequelize');
+const bcrypt = require('bcryptjs');
 
-const User = new EntitySchema({
-  name: "User",
-  tableName: "users",
-  columns: {
+module.exports = (sequelize) => {
+  const User = sequelize.define('User', {
     id: {
-      primary: true,
-      type: "varchar",
-      generated: "uuid"
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
     },
     username: {
-      type: "varchar",
-      length: 100,
-      unique: true
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      unique: true,
+      validate: {
+        len: [3, 50],
+        notEmpty: true
+      }
     },
     email: {
-      type: "varchar",
-      length: 150,
-      unique: true
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: true,
+        notEmpty: true
+      }
     },
     password: {
-      type: "varchar",
-      length: 255
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      validate: {
+        len: [6, 255],
+        notEmpty: true
+      }
     },
     isActive: {
-      type: "boolean",
-      default: true
-    },
-    lastLogin: {
-      type: "timestamp",
-      nullable: true
-    },
-    createdAt: {
-      type: "timestamp",
-      createDate: true
-    },
-    updatedAt: {
-      type: "timestamp",
-      updateDate: true
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
     }
-  }
-});
+  }, {
+    tableName: 'users',
+    timestamps: true,
+    hooks: {
+      beforeCreate: async (user) => {
+        if (user.password) {
+          user.password = await bcrypt.hash(user.password, 12);
+        }
+      },
+      beforeUpdate: async (user) => {
+        if (user.changed('password')) {
+          user.password = await bcrypt.hash(user.password, 12);
+        }
+      }
+    }
+  });
 
-module.exports = { User };
+  User.prototype.comparePassword = async function(candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password);
+  };
+
+  User.prototype.toJSON = function() {
+    const values = Object.assign({}, this.get());
+    delete values.password;
+    return values;
+  };
+
+  return User;
+};
+
+

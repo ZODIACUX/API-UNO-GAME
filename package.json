@@ -1,41 +1,47 @@
 {
-  "name": "game-management-api",
+  "name": "uno-game-api",
   "version": "1.0.0",
-  "description": "API para gestión de juegos con arquitectura de tres capas",
-  "main": "src/index.js",
+  "description": "API para juego de cartas UNO",
+  "main": "index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "migrate": "npx sequelize-cli db:migrate",
+    "migrate:undo": "npx sequelize-cli db:migrate:undo",
+    "migrate:create": "npx sequelize-cli migration:generate --name",
+    "seed": "npx sequelize-cli db:seed:all",
+    "seed:undo": "npx sequelize-cli db:seed:undo:all",
+    "seed:create": "npx sequelize-cli seed:generate --name",
+    "test-db": "node scripts/docker-mysql-test.js",
+    "setup-db": "npm run test-db && npm run migrate && npm run seed",
+    "reset-db": "npm run migrate:undo && npm run migrate && npm run seed",
+    "docker:start": "docker start UNO-GAME",
+    "docker:stop": "docker stop UNO-GAME",
+    "docker:status": "docker ps | grep UNO-GAME || echo 'Contenedor no ejecutándose'",
+    "docker:logs": "docker logs UNO-GAME",
+    "docker:connect": "docker exec -it UNO-GAME mysql -u gameuser -p"
   },
+  "keywords": ["uno", "game", "api", "nodejs", "express", "mysql", "docker"],
+  "author": "Tu Nombre",
+  "license": "MIT",
   "dependencies": {
+    "express": "^4.18.2",
+    "mysql2": "^3.6.0",
+    "sequelize": "^6.32.1",
+    "jsonwebtoken": "^9.0.2",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "express-rate-limit": "^6.8.1",
     "helmet": "^7.0.0",
-    "joi": "^17.9.2",
-    "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.6.0",
-    "reflect-metadata": "^0.1.13",
-    "typeorm": "^0.3.17",
-    "uuid": "^9.0.0"
+    "express-rate-limit": "^6.10.0",
+    "joi": "^17.9.2"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "sequelize-cli": "^6.6.1"
   },
   "engines": {
-    "node": ">=16.0.0"
-  },
-  "keywords": [
-    "api",
-    "game",
-    "management",
-    "nodejs",
-    "express",
-    "typeorm",
-    "mysql"
-  ],
-  "author": "Your Name",
-  "license": "MIT"
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
 }

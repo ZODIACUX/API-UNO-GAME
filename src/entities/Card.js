@@ -1,50 +1,28 @@
-const { EntitySchema } = require("typeorm");
+const { DataTypes } = require('sequelize');
 
-const Card = new EntitySchema({
-  name: "Card",
-  tableName: "cards",
-  columns: {
+module.exports = (sequelize) => {
+  const Card = sequelize.define('Card', {
     id: {
-      primary: true,
-      type: "varchar",
-      generated: "uuid"
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
     },
-    name: {
-      type: "varchar",
-      length: 100
-    },
-    description: {
-      type: "text"
+    color: {
+      type: DataTypes.ENUM('red', 'blue', 'green', 'yellow', 'wild'),
+      allowNull: false
     },
     type: {
-      type: "varchar",
-      length: 50
+      type: DataTypes.ENUM('number', 'skip', 'reverse', 'draw_two', 'wild', 'wild_draw_four'),
+      allowNull: false
     },
     value: {
-      type: "int",
-      default: 0
-    },
-    rarity: {
-      type: "varchar",
-      length: 50
-    },
-    isActive: {
-      type: "boolean",
-      default: true
-    },
-    attributes: {
-      type: "json",
-      nullable: true
-    },
-    createdAt: {
-      type: "timestamp",
-      createDate: true
-    },
-    updatedAt: {
-      type: "timestamp",
-      updateDate: true
+      type: DataTypes.STRING(20),
+      allowNull: true
     }
-  }
-});
+  }, {
+    tableName: 'cards',
+    timestamps: false
+  });
 
-module.exports = { Card };
+  return Card;
+};

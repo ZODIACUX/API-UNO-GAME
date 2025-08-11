@@ -3,55 +3,37 @@ version: '3.8'
 services:
   mysql:
     image: mysql:8.0
-    container_name: game_management_db
-    restart: unless-stopped
+    container_name: UNO-GAME
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: game_management
+      MYSQL_USER: gameuser
+      MYSQL_PASSWORD: gamepassword
     ports:
-      - "${DB_PORT:-3306}:3306"
+      - "3319:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - game_network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+    restart: unless-stopped
 
   app:
     build: .
-    container_name: game_management_api
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      DB_HOST: mysql
-    ports:
-      - "${PORT:-3000}:${PORT:-3000}"
+    container_name: uno-api
     depends_on:
-      mysql:
-        condition: service_healthy
-    networks:
-      - game_network
-    volumes:
-      - ./logs:/app/logs
-
-  adminer:
-    image: adminer
-    container_name: game_management_adminer
-    restart: unless-stopped
+      - mysql
     ports:
-      - "8080:8080"
-    networks:
-      - game_network
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=gameuser
+      - DB_PASSWORD=gamepassword
+      - DB_NAME=game_management
+      - JWT_SECRET=your_super_secret_jwt_key
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
 
 volumes:
   mysql_data:
-
-networks:
-  game_network:
-    driver: bridge
