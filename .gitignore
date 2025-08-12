@@ -1,41 +1,29 @@
-# ===============================================
-# .gitignore para Game Management API
-# ===============================================
-
-# ===============================================
-# Node.js Dependencies
-# ===============================================
+# Dependencies
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-# ===============================================
-# Environment Variables (CRÍTICO - NO SUBIR)
-# ===============================================
+# Environment variables (CRÍTICO - NO SUBIR)
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 .env.*.local
-
-# Backup de archivos .env
 .env.backup
 .env.bak
 *.env
 
-# ===============================================
-# Logs y Archivos Temporales
-# ===============================================
+# Logs
 logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+tests.log
 
 # Runtime data
 pids
@@ -43,252 +31,97 @@ pids
 *.seed
 *.pid.lock
 
-# ===============================================
 # Coverage y Testing
-# ===============================================
 coverage/
 *.lcov
 .nyc_output/
 test-results/
 junit.xml
-
-# Jest
 jest-cache/
 .jest/
 
-# ===============================================
 # Build y Dist
-# ===============================================
 dist/
 build/
 out/
 .output/
 
-# ===============================================
 # Database
-# ===============================================
-# Archivos de base de datos locales
 *.sqlite
 *.sqlite3
 *.db
-
-# Dumps de base de datos
 *.sql
 *.dump
 db_backup/
 database_backups/
 
-# ===============================================
 # IDEs y Editores
-# ===============================================
-
-# Visual Studio Code
 .vscode/
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
-
-# WebStorm/IntelliJ
 .idea/
 *.swp
 *.swo
 *~
 
-# Sublime Text
-*.sublime-project
-*.sublime-workspace
-
-# Vim
-*.swp
-*.swo
-*.swn
-.netrwhist
-
-# Emacs
-*~
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-auto-save-list
-tramp
-.\#*
-
-# ===============================================
 # Sistema Operativo
-# ===============================================
-
-# macOS
 .DS_Store
 .AppleDouble
 .LSOverride
-.Spotlight-V100
-.Trashes
-._*
-
-# Windows
 Thumbs.db
 Thumbs.db:encryptable
 ehthumbs.db
-ehthumbs_vista.db
-*.stackdump
 [Dd]esktop.ini
 $RECYCLE.BIN/
-*.cab
-*.msi
-*.msix
-*.msm
-*.msp
-*.lnk
 
-# Linux
-*~
-.fuse_hidden*
-.directory
-.Trash-*
-.nfs*
-
-# ===============================================
 # Docker
-# ===============================================
-.dockerignore
 docker-compose.override.yml
 .docker/
 
-# ===============================================
-# Archivos de Configuración Sensibles
-# ===============================================
-config/production.json
-config/development.json
-config/local.json
-secrets/
-credentials/
-certificates/
-ssl/
-keys/
-*.pem
-*.key
-*.crt
-*.p12
-*.pfx
-
-# ===============================================
-# Uploads y Archivos de Usuario
-# ===============================================
+# Uploads y archivos temporales
 uploads/
 temp/
 tmp/
-public/uploads/
-storage/
-media/
-assets/uploads/
-
-# ===============================================
-# Cache y Archivos Temporales
-# ===============================================
 .cache/
 .temp/
 .tmp/
 *.tmp
 *.temp
 
-# ESLint cache
+# ESLint y Prettier cache
 .eslintcache
-
-# Prettier cache
 .prettiercache
-
-# Stylelint cache
 .stylelintcache
 
-# ===============================================
-# Package Managers
-# ===============================================
-
-# Yarn
+# Package managers
 .yarn/cache
 .yarn/unplugged
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
-
-# pnpm
 .pnpm-store/
 
-# ===============================================
-# Runtime y Process
-# ===============================================
+# PM2
 .pm2/
 ecosystem.config.js
 
-# ===============================================
-# Documentación Generada
-# ===============================================
+# Documentación generada
 docs/generated/
 api-docs/
 swagger-output.json
 
-# ===============================================
-# Monitoreo y Análisis
-# ===============================================
+# Monitoreo
 newrelic_agent.log
-.nyc_output
 
-# ===============================================
-# Archivos de Respaldo
-# ===============================================
+# Archivos de respaldo
 *.backup
 *.bak
 *.orig
 *.rej
-*~
-*.swp
 
-# ===============================================
-# Archivos Específicos del Proyecto
-# ===============================================
-
-# Archivos de prueba temporales
-test-data/
-mock-data/
-seed-data/
-
-# Archivos de migración generados automáticamente
-migrations/generated/
-
-# Archivos de configuración local personalizados
-config.local.js
-settings.local.json
-
-# ===============================================
-# Variables de Entorno de Ejemplo (MANTENER)
-# ===============================================
-# NOTA: .env.example SÍ debe estar en el repo
-# !.env.example
-
-# ===============================================
-# Archivos que SÍ deben incluirse (usando !)
-# ===============================================
+# Mantener archivos de ejemplo
 !.env.example
-!.gitkeep
-!README.md
-!LICENSE
-!package.json
-!package-lock.json
-
-# ===============================================
-# Comentarios y Notas
-# ===============================================
-
-# IMPORTANTE: 
-# - NUNCA subir archivos .env con credenciales reales
-# - Mantener .env.example como template
-# - Revisar este .gitignore antes de cada commit
-# - Usar 'git status' para verificar qué se está subiendo
-
-# COMANDOS ÚTILES:
-# git rm --cached .env          # Remover .env del tracking si ya fue agregado
-# git check-ignore archivo      # Verificar si un archivo está siendo ignorado
-# git status --ignored          # Ver archivos ignorados
+!.env.test.example

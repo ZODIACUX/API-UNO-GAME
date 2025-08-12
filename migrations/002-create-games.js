@@ -1,72 +1,119 @@
-'use strict';
+const { Table, TableIndex, TableForeignKey } = require('typeorm')
 
-module.exports = {
-  up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('games', {
-      id: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-        allowNull: false
-      },
-      name: {
-        type: Sequelize.STRING(100),
-        allowNull: false
-      },
-      rules: {
-        type: Sequelize.TEXT,
-        allowNull: true
-      },
-      status: {
-        type: Sequelize.ENUM('waiting', 'in_progress', 'finished'),
-        defaultValue: 'waiting'
-      },
-      currentPlayerId: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        references: {
-          model: 'users',
-          key: 'id'
-        }
-      },
-      direction: {
-        type: Sequelize.ENUM('clockwise', 'counterclockwise'),
-        defaultValue: 'clockwise'
-      },
-      topCard: {
-        type: Sequelize.JSON,
-        allowNull: true
-      },
-      creatorId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'users',
-          key: 'id'
-        }
-      },
-      maxPlayers: {
-        type: Sequelize.INTEGER,
-        defaultValue: 4
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
-      }
-    });
+module.exports = class CreateGames1691760000001 {
+  name = 'CreateGames1691760000001'
 
-    // Índices
-    await queryInterface.addIndex('games', ['creatorId']);
-    await queryInterface.addIndex('games', ['status']);
-  },
+  async up(queryRunner) {
+    await queryRunner.createTable(
+      new Table({
+        name: 'games',
+        columns: [
+          {
+            name: 'id',
+            type: 'int',
+            isPrimary: true,
+            isGenerated: true,
+            generationStrategy: 'increment'
+          },
+          {
+            name: 'name',
+            type: 'varchar',
+            length: '100',
+            isNullable: false
+          },
+          {
+            name: 'rules',
+            type: 'text',
+            isNullable: true
+          },
+          {
+            name: 'status',
+            type: 'enum',
+            enum: ['waiting', 'in_progress', 'finished'],
+            default: '\'waiting\''
+          },
+          {
+            name: 'currentPlayerId',
+            type: 'int',
+            isNullable: true
+          },
+          {
+            name: 'direction',
+            type: 'enum',
+            enum: ['clockwise', 'counterclockwise'],
+            default: '\'clockwise\''
+          },
+          {
+            name: 'topCard',
+            type: 'json',
+            isNullable: true
+          },
+          {
+            name: 'creatorId',
+            type: 'int',
+            isNullable: false
+          },
+          {
+            name: 'maxPlayers',
+            type: 'int',
+            default: 4
+          },
+          {
+            name: 'createdAt',
+            type: 'timestamp',
+            default: 'CURRENT_TIMESTAMP'
+          },
+          {
+            name: 'updatedAt',
+            type: 'timestamp',
+            default: 'CURRENT_TIMESTAMP',
+            onUpdate: 'CURRENT_TIMESTAMP'
+          }
+        ]
+      }),
+      true
+    )
 
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('games');
+    // Create foreign keys
+    await queryRunner.createForeignKey(
+      'games',
+      new TableForeignKey({
+        columnNames: ['currentPlayerId'],
+        referencedColumnNames: ['id'],
+        referencedTableName: 'users',
+        onDelete: 'SET NULL'
+      })
+    )
+
+    await queryRunner.createForeignKey(
+      'games',
+      new TableForeignKey({
+        columnNames: ['creatorId'],
+        referencedColumnNames: ['id'],
+        referencedTableName: 'users',
+        onDelete: 'CASCADE'
+      })
+    )
+
+    // Create indexes
+    await queryRunner.createIndex(
+      'games',
+      new TableIndex({
+        name: 'IDX_GAMES_CREATOR',
+        columnNames: ['creatorId']
+      })
+    )
+
+    await queryRunner.createIndex(
+      'games',
+      new TableIndex({
+        name: 'IDX_GAMES_STATUS',
+        columnNames: ['status']
+      })
+    )
   }
-};
+
+  async down(queryRunner) {
+    await queryRunner.dropTable('games')
+  }
+}

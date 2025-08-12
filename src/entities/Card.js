@@ -1,28 +1,27 @@
-const { DataTypes } = require('sequelize');
+const { Entity, PrimaryGeneratedColumn, Column, OneToMany } = require('typeorm')
 
-module.exports = (sequelize) => {
-  const Card = sequelize.define('Card', {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true
-    },
-    color: {
-      type: DataTypes.ENUM('red', 'blue', 'green', 'yellow', 'wild'),
-      allowNull: false
-    },
-    type: {
-      type: DataTypes.ENUM('number', 'skip', 'reverse', 'draw_two', 'wild', 'wild_draw_four'),
-      allowNull: false
-    },
-    value: {
-      type: DataTypes.STRING(20),
-      allowNull: true
-    }
-  }, {
-    tableName: 'cards',
-    timestamps: false
-  });
+@Entity('cards')
+class Card {
+    @PrimaryGeneratedColumn()
+      id
 
-  return Card;
-};
+    @Column({
+      type: 'enum',
+      enum: ['red', 'blue', 'green', 'yellow', 'wild']
+    })
+      color
+
+    @Column({
+      type: 'enum',
+      enum: ['number', 'skip', 'reverse', 'draw_two', 'wild', 'wild_draw_four']
+    })
+      type
+
+    @Column({ type: 'varchar', length: 20, nullable: true })
+      value
+
+    @OneToMany('GameCard', 'card')
+      gameCards
+}
+
+module.exports = { Card }

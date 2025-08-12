@@ -1,50 +1,47 @@
-'use strict'
+const bcrypt = require('bcryptjs')
+const { AppDataSource } = require('../src/database/data-source')
+const { User } = require('../src/entities/User')
 
-const bcrypt = require('bcryptjs');
+module.exports = class DemoUsersSeeder {
+  async run() {
+    const userRepository = AppDataSource.getRepository(User)
+    const hashedPassword = await bcrypt.hash('password123', 12)
 
-module.exports = {
-  up: async (queryInterface, Sequelize) => {
-    const hashedPassword = await bcrypt.hash('password123', 12);
-    
-    await queryInterface.bulkInsert('users', [
+    const users = [
       {
         username: 'player1',
         email: 'player1@example.com',
         password: hashedPassword,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        isActive: true
       },
       {
         username: 'player2',
         email: 'player2@example.com',
         password: hashedPassword,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        isActive: true
       },
       {
         username: 'player3',
         email: 'player3@example.com',
         password: hashedPassword,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        isActive: true
       },
       {
         username: 'player4',
         email: 'player4@example.com',
         password: hashedPassword,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        isActive: true
       }
-    ]);
-  },
+    ]
 
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.bulkDelete('users', {
-      username: ['player1', 'player2', 'player3', 'player4']
-    });
+    const usersToInsert = users.map(userData => userRepository.create(userData))
+    await userRepository.save(usersToInsert)
   }
-};
+
+  async revert() {
+    const userRepository = AppDataSource.getRepository(User)
+    await userRepository.delete({
+      username: ['player1', 'player2', 'player3', 'player4']
+    })
+  }
+}

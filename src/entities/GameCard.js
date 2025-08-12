@@ -1,49 +1,60 @@
-const { DataTypes } = require('sequelize');
+const { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } = require('typeorm')
 
-module.exports = (sequelize) => {
-  const GameCard = sequelize.define('GameCard', {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true
-    },
-    gameId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'games',
-        key: 'id'
+@Entity('game_cards')
+class GameCard {
+    @PrimaryGeneratedColumn()
+      id
+
+    @Column({ type: 'int' })
+      gameId
+
+    @Column({ type: 'int' })
+      cardId
+
+    @Column({ type: 'int', nullable: true })
+      playerId
+
+    @Column({
+      type: 'enum',
+      enum: ['hand', 'deck', 'discard'],
+      default: 'deck'
+    })
+      location
+
+    @Column({ type: 'int', nullable: true })
+      position
+
+    @CreateDateColumn()
+      createdAt
+
+    @UpdateDateColumn()
+      updatedAt
+
+    @ManyToOne('UnoGame', 'cards')
+    @JoinColumn({ name: 'gameId' })
+      game
+
+    @ManyToOne('Card', 'gameCards')
+    @JoinColumn({ name: 'cardId' })
+      card
+
+    @ManyToOne('GamePlayer', 'cards')
+    @JoinColumn({ name: 'playerId' })
+      player
+
+    /**
+     * Obtiene una representación del estado de la carta
+     * @returns {Object} El estado de la carta
+     */
+    getState() {
+      return {
+        id: this.id,
+        location: this.location,
+        position: this.position,
+        cardId: this.cardId,
+        playerId: this.playerId
       }
-    },
-    cardId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'cards',
-        key: 'id'
-      }
-    },
-    userId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'users',
-        key: 'id'
-      }
-    },
-    location: {
-      type: DataTypes.ENUM('hand', 'deck', 'discard'),
-      allowNull: false,
-      defaultValue: 'deck'
-    },
-    position: {
-      type: DataTypes.INTEGER,
-      allowNull: true
     }
-  }, {
-    tableName: 'game_cards',
-    timestamps: true
-  });
+}
 
-  return GameCard;
-};
+module.exports = { GameCard }

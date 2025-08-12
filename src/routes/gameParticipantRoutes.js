@@ -1,0 +1,13 @@
+const express = require('express')
+const router = express.Router()
+const gameParticipantController = require('../controllers/gameParticipantController')
+const auth = require('../middleware/auth')
+const { validateParticipantParams } = require('../validation/gameParticipantValidation')
+
+router.post('/games/:gameId/join', auth, validateParticipantParams, gameParticipantController.joinGame)
+router.delete('/games/:gameId/leave', auth, validateParticipantParams, gameParticipantController.leaveGame)
+router.get('/games/:gameId/participants', validateParticipantParams, gameParticipantController.getParticipants)
+router.get('/participants/:userId/stats', validateParticipantParams, gameParticipantController.getParticipantStats)
+router.get('/leaderboard', gameParticipantController.getLeaderboard)
+
+module.exports = router

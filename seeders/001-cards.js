@@ -1,22 +1,24 @@
-'use strict';
+const { AppDataSource } = require('../src/database/data-source')
+const { Card } = require('../src/entities/Card')
+const CardGenerator = require('../src/utils-api/cardGenerator')
 
-const CardGenerator = require('../src/utils-api/cardGenerator');
+module.exports = class CardSeeder {
+  async run() {
+    const cardRepository = AppDataSource.getRepository(Card)
+    const cards = CardGenerator.generateUNODeck()
 
-module.exports = {
-  up: async (queryInterface, Sequelize) => {
-    const cards = CardGenerator.generateUNODeck();
-    
     // Remover el ID ya que es auto-increment
-    const cardsToInsert = cards.map(card => ({
+    const cardsToInsert = cards.map(card => cardRepository.create({
       color: card.color,
       type: card.type,
       value: card.value
-    }));
+    }))
 
-    await queryInterface.bulkInsert('cards', cardsToInsert);
-  },
-
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.bulkDelete('cards', null, {});
+    await cardRepository.save(cardsToInsert)
   }
-};
+
+  async revert() {
+    const cardRepository = AppDataSource.getRepository(Card)
+    await cardRepository.clear()
+  }
+}
