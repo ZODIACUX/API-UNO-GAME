@@ -1,54 +1,230 @@
-"name": "uno-game-api",
+{
+  "name": "uno-game-api",
   "version": "1.0.0",
   "description": "API para juego de cartas UNO",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "start": "node -r @babel/register index.js",
+    "dev": "nodemon -r @babel/register index.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:unit": "jest --testPathPattern=unit",
+    "test:unit:working": "jest tests/unit/basic.test.js tests/unit/simple.test.js tests/unit/cardService.test.js tests/unit/gamePlayerService.test.js",
     "test:integration": "jest --testPathPattern=integration",
-    "migrate": "npx sequelize-cli db:migrate",
-    "migrate:test": "NODE_ENV=test npx sequelize-cli db:migrate",
-    "seed": "npx sequelize-cli db:seed:all",
-    "seed:test": "NODE_ENV=test npx sequelize-cli db:seed:all",
-    "test-db": "node scripts/docker-mysql-test.js",
-    "setup-db": "npm run test-db && npm run migrate && npm run seed",
-    "setup-test-db": "npm run migrate:test && npm run seed:test"
+    "test:integration:mocha": "mocha -r @babel/register tests/integration/**/*.test.js --timeout 30000",
+    "test:all": "node tests/runAllTests.js",
+    "test:crud": "jest tests/unit/crud/",
+    "test:auth": "jest tests/unit/auth/",
+    "test:game": "jest tests/unit/game/",
+    "test:db": "jest tests/unit/crud/database.interaction.test.js",
+    "test:simple": "jest tests/unit/simple.test.js",
+    "test:verbose": "jest --verbose",
+    "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migrate": "npm run typeorm migration:run -- -d src/database/data-source.js",
+    "migrate:test": "NODE_ENV=test npm run typeorm migration:run -- -d src/database/data-source.js",
+    "migrate:revert": "npm run typeorm migration:revert -- -d src/database/data-source.js",
+    "migrate:generate": "npm run typeorm migration:generate -- -d src/database/data-source.js",
+    "migrate:create": "npm run typeorm migration:create",
+    "schema:sync": "npm run typeorm schema:sync -- -d src/database/data-source.js",
+    "schema:drop": "npm run typeorm schema:drop -- -d src/database/data-source.js",
+    "seed": "ts-node src/database/seeds/seed.js",
+    "seed:test": "NODE_ENV=test ts-node src/database/seeds/seed.js",
+    "test-db": "node scripts/test-connection.js",
+    "test-db-docker": "node scripts/docker-mysql-test.js",
+    "setup-db": "node scripts/database-setup.js",
+    "setup-test-db": "cross-env NODE_ENV=test node scripts/database-setup.js",
+    "reset-test-db": "npm run schema:drop && npm run setup-test-db",
+    "docker:start": "docker-compose up -d",
+    "docker:stop": "docker-compose down",
+    "docker:logs": "docker-compose logs mysql",
+    "validate-env": "node scripts/validate-env.js",
+    "lint": "eslint src/ tests/ --fix",
+    "format": "prettier --write src/ tests/",
+    "clean": "rm -rf node_modules package-lock.json coverage/ && npm install",
+    "clean:test": "rm -rf coverage/ && NODE_ENV=test npm run migrate:reset:test",
+    "pretest": "echo '🧪 Preparando tests...' && cross-env NODE_ENV=test npm run validate-env",
+    "posttest": "echo '✅ Tests completados'"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "mysql2": "^3.6.0",
-    "sequelize": "^6.32.1",
-    "jsonwebtoken": "^9.0.2",
+    "@babel/cli": "^7.28.0",
+    "@babel/core": "^7.28.0",
+    "@babel/plugin-proposal-class-properties": "^7.18.6",
+    "@babel/plugin-proposal-decorators": "^7.28.0",
+    "@babel/plugin-transform-runtime": "^7.28.0",
+    "@babel/preset-env": "^7.28.0",
+    "@babel/register": "^7.27.1",
+    "@babel/runtime": "^7.28.2",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "helmet": "^7.0.0",
+    "express": "^4.18.2",
     "express-rate-limit": "^6.10.0",
-    "joi": "^17.9.2"
+    "helmet": "^7.0.0",
+    "joi": "^17.9.2",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.14.3",
+    "reflect-metadata": "^0.1.14",
+    "typeorm": "^0.3.25"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1",
-    "sequelize-cli": "^6.6.1",
+    "@babel/eslint-parser": "^7.28.0",
+    "@types/jest": "^29.5.3",
+    "@types/node": "^24.2.1",
+    "babel-jest": "^30.0.5",
+    "chai": "^4.3.7",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.45.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.28.0",
+    "eslint-plugin-n": "^16.0.1",
+    "eslint-plugin-promise": "^6.1.1",
     "jest": "^29.6.2",
+    "mocha": "^11.7.1",
+    "nodemon": "^3.0.1",
+    "prettier": "^3.0.0",
+    "sinon": "^21.0.0",
     "supertest": "^6.3.3",
-    "@types/jest": "^29.5.3"
+    "ts-node": "^10.9.2",
+    "typeorm-extension": "^3.7.1"
   },
   "jest": {
     "testEnvironment": "node",
-    "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/setup.js"
+    ],
+    "transform": {
+      "^.+\\.(js|jsx)$": "babel-jest"
+    },
     "testMatch": [
       "<rootDir>/tests/**/*.test.js"
     ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/coverage/"
+    ],
     "collectCoverageFrom": [
       "src/**/*.js",
-      "!src/database/index.js",
-      "!index.js"
+      "controllers/**/*.js",
+      "routes/**/*.js",
+      "middleware/**/*.js",
+      "!src/migrations/**",
+      "!src/seeders/**",
+      "!index.js",
+      "!**/node_modules/**",
+      "!coverage/**"
     ],
     "coverageDirectory": "coverage",
-    "coverageReporters": ["text", "lcov", "html"]
+    "coverageReporters": [
+      "text",
+      "text-summary",
+      "lcov",
+      "html",
+      "json"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 60,
+        "functions": 60,
+        "lines": 60,
+        "statements": 60
+      }
+    },
+    "testTimeout": 30000,
+    "maxWorkers": 1,
+    "verbose": true,
+    "collectCoverage": false,
+    "forceExit": true,
+    "detectOpenHandles": true,
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1",
+      "^@controllers/(.*)$": "<rootDir>/controllers/$1",
+      "^@routes/(.*)$": "<rootDir>/routes/$1",
+      "^@middleware/(.*)$": "<rootDir>/middleware/$1"
+    },
+    "globalSetup": null,
+    "globalTeardown": null,
+    "resetMocks": true,
+    "restoreMocks": true,
+    "clearMocks": true
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "uno",
+    "game",
+    "api",
+    "cards",
+    "multiplayer",
+    "nodejs",
+    "express",
+    "mysql",
+    "typeorm",
+    "jest",
+    "testing",
+    "unit-tests",
+    "integration-tests",
+    "crud",
+    "authentication",
+    "jwt"
+  ],
+  "author": "JALAU Team <team@jalau.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jalau/uno-game-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jalau/uno-game-api/issues"
+  },
+  "homepage": "https://github.com/jalau/uno-game-api#readme",
+  "nodemonConfig": {
+    "watch": [
+      "src/",
+      "controllers/",
+      "routes/",
+      "middleware/"
+    ],
+    "ext": "js,json",
+    "ignore": [
+      "tests/",
+      "coverage/",
+      "node_modules/"
+    ],
+    "exec": "node -r @babel/register index.js"
+  },
+  "eslintConfig": {
+    "env": {
+      "node": true,
+      "es2021": true,
+      "jest": true
+    },
+    "extends": [
+      "standard"
+    ],
+    "parserOptions": {
+      "ecmaVersion": 12,
+      "sourceType": "module"
+    },
+    "rules": {
+      "no-console": "off",
+      "prefer-const": "error",
+      "no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_"
+        }
+      ]
+    }
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "es5",
+    "printWidth": 100
   }
 }

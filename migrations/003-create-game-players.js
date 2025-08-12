@@ -1,70 +1,115 @@
-'use strict';
+const { Table, TableIndex, TableForeignKey } = require('typeorm')
 
-module.exports = {
-  up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('game_players', {
-      id: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-        allowNull: false
-      },
-      userId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'users',
-          key: 'id'
-        },
+module.exports = class CreateGamePlayers1691760000002 {
+  name = 'CreateGamePlayers1691760000002'
+
+  async up(queryRunner) {
+    await queryRunner.createTable(
+      new Table({
+        name: 'game_players',
+        columns: [
+          {
+            name: 'id',
+            type: 'int',
+            isPrimary: true,
+            isGenerated: true,
+            generationStrategy: 'increment'
+          },
+          {
+            name: 'userId',
+            type: 'int',
+            isNullable: false
+          },
+          {
+            name: 'gameId',
+            type: 'int',
+            isNullable: false
+          },
+          {
+            name: 'score',
+            type: 'int',
+            default: 0
+          },
+          {
+            name: 'position',
+            type: 'int',
+            isNullable: false
+          },
+          {
+            name: 'isReady',
+            type: 'boolean',
+            default: false
+          },
+          {
+            name: 'cardsCount',
+            type: 'int',
+            default: 7
+          },
+          {
+            name: 'createdAt',
+            type: 'timestamp',
+            default: 'CURRENT_TIMESTAMP'
+          },
+          {
+            name: 'updatedAt',
+            type: 'timestamp',
+            default: 'CURRENT_TIMESTAMP',
+            onUpdate: 'CURRENT_TIMESTAMP'
+          }
+        ]
+      }),
+      true
+    )
+
+    // Create foreign keys
+    await queryRunner.createForeignKey(
+      'game_players',
+      new TableForeignKey({
+        columnNames: ['userId'],
+        referencedColumnNames: ['id'],
+        referencedTableName: 'users',
         onDelete: 'CASCADE'
-      },
-      gameId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'games',
-          key: 'id'
-        },
+      })
+    )
+
+    await queryRunner.createForeignKey(
+      'game_players',
+      new TableForeignKey({
+        columnNames: ['gameId'],
+        referencedColumnNames: ['id'],
+        referencedTableName: 'games',
         onDelete: 'CASCADE'
-      },
-      score: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0
-      },
-      position: {
-        type: Sequelize.INTEGER,
-        allowNull: false
-      },
-      isReady: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false
-      },
-      cardsCount: {
-        type: Sequelize.INTEGER,
-        defaultValue: 7
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
-      }
-    });
+      })
+    )
 
-    // Índices
-    await queryInterface.addIndex('game_players', ['userId']);
-    await queryInterface.addIndex('game_players', ['gameId']);
-    await queryInterface.addIndex('game_players', ['userId', 'gameId'], {
-      unique: true,
-      name: 'unique_user_game'
-    });
-  },
+    // Create indexes
+    await queryRunner.createIndex(
+      'game_players',
+      new TableIndex({
+        name: 'IDX_GAME_PLAYERS_USER',
+        columnNames: ['userId']
+      })
+    )
 
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('game_players');
+    await queryRunner.createIndex(
+      'game_players',
+      new TableIndex({
+        name: 'IDX_GAME_PLAYERS_GAME',
+        columnNames: ['gameId']
+      })
+    )
+
+    await queryRunner.createIndex(
+      'game_players',
+      new TableIndex({
+        name: 'unique_user_game',
+        columnNames: ['userId', 'gameId'],
+        isUnique: true
+      })
+    )
   }
-};
+
+  async down(queryRunner) {
+    await queryRunner.dropTable('game_players')
+  }
+}
