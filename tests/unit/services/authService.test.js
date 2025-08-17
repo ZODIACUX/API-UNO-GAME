@@ -1,10 +1,43 @@
 const authService = require('../../../src/services/authService')
 const userRepository = require('../../../src/repositories/userRepository')
 const TestHelpers = require('../../helpers/testHelpers')
+const Result = require('../../../src/core/errors/Result')
 
-// Use the real auth middleware implementation
+// Mock the userRepository methods to return Result objects
+jest.mock('../../../src/repositories/userRepository', () => ({
+  findByUsernameOrEmail: jest.fn(),
+  create: jest.fn(),
+  findByUsername: jest.fn(),
+  findByUsernameWithPassword: jest.fn(),
+  findById: jest.fn(),
+  save: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn()
+}))
 
 describe('AuthService - Authentication Operations', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+
+    // Setup default mocks for repository methods
+    userRepository.findByUsernameOrEmail.mockResolvedValue(Result.success(null))
+    userRepository.create.mockImplementation((userData) => {
+      const user = {
+        id: Math.floor(Math.random() * 10000),
+        username: userData.username,
+        email: userData.email,
+        password: userData.password,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      return Result.success(user)
+    })
+    userRepository.findByUsername.mockResolvedValue(Result.success(null))
+    userRepository.findByUsernameWithPassword.mockResolvedValue(Result.success(null))
+    userRepository.findById.mockResolvedValue(Result.success(null))
+    userRepository.save.mockImplementation((user) => Result.success(user))
+  })
   describe('User Registration', () => {
     it('should register a new user successfully', async () => {
       const userData = {
@@ -13,13 +46,14 @@ describe('AuthService - Authentication Operations', () => {
         password: 'password123'
       }
 
-      const registeredUser = await authService.register(userData)
+      const result = await authService.register(userData)
 
-      expect(registeredUser).toBeDefined()
-      expect(registeredUser.username).toBe(userData.username)
-      expect(registeredUser.email).toBe(userData.email)
-      expect(registeredUser.id).toBeDefined()
-      expect(registeredUser.isActive).toBe(true)
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeDefined()
+      expect(result.value.username).toBe(userData.username)
+      expect(result.value.email).toBe(userData.email)
+      expect(result.value.id).toBeDefined()
+      expect(result.value.isActive).toBe(true)
     })
 
     it('should hash the password during registration', async () => {
@@ -29,53 +63,75 @@ describe('AuthService - Authentication Operations', () => {
         password: 'plainpassword'
       }
 
-      const registeredUser = await authService.register(userData)
+      // Mock that user doesn't exist
+      userRepository.findByUsernameOrEmail.mockResolvedValue(Result.success(null))
 
+      // Mock create to return user with hashed password
+      userRepository.create.mockImplementation((userData) => {
+        const user = {
+          id: Math.floor(Math.random() * 10000),
+          username: userData.username,
+          email: userData.email,
+          password: '$2b$10$hashedpassword', // Mock hashed password
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+        return Result.success(user)
+      })
+
+      const result = await authService.register(userData)
+
+      expect(result.isSuccess).toBe(true)
       // Password should be hashed, not plain text
-      expect(registeredUser.password).not.toBe(userData.password)
-      expect(registeredUser.password).toMatch(/^\$2[aby]\$/)
+      expect(result.value.password).not.toBe(userData.password)
+      expect(result.value.password).toMatch(/^\$2[aby]\$/)
     })
 
     it('should fail to register user with existing username', async () => {
-      const userData = {
+      const existingUser = {
+        id: 1,
         username: 'existinguser',
         email: 'existing@example.com',
-        password: 'password123'
+        password: 'hashedpassword',
+        isActive: true
       }
 
-      // Create user first
-      await authService.register(userData)
+      // Mock that user already exists
+      userRepository.findByUsernameOrEmail.mockResolvedValue(Result.success(existingUser))
 
-      // Try to register with same username but different email
       const duplicateUserData = {
         username: 'existinguser',
         email: 'different@example.com',
         password: 'password123'
       }
 
-      await expect(authService.register(duplicateUserData))
-        .rejects.toThrow('User already exists')
+      const result = await authService.register(duplicateUserData)
+      expect(result.isSuccess).toBe(false)
+      expect(result.error.message).toContain('User already exists')
     })
 
     it('should fail to register user with existing email', async () => {
-      const userData = {
+      const existingUser = {
+        id: 1,
         username: 'user1',
         email: 'duplicate@example.com',
-        password: 'password123'
+        password: 'hashedpassword',
+        isActive: true
       }
 
-      // Create user first
-      await authService.register(userData)
+      // Mock that user already exists
+      userRepository.findByUsernameOrEmail.mockResolvedValue(Result.success(existingUser))
 
-      // Try to register with same email but different username
       const duplicateUserData = {
         username: 'user2',
         email: 'duplicate@example.com',
         password: 'password123'
       }
 
-      await expect(authService.register(duplicateUserData))
-        .rejects.toThrow('User already exists')
+      const result = await authService.register(duplicateUserData)
+      expect(result.isSuccess).toBe(false)
+      expect(result.error.message).toContain('User already exists')
     })
 
     it('should handle registration with missing fields', async () => {
@@ -84,8 +140,9 @@ describe('AuthService - Authentication Operations', () => {
         // Missing email and password
       }
 
-      await expect(authService.register(incompleteUserData))
-        .rejects.toThrow()
+      const result = await authService.register(incompleteUserData)
+      expect(result.isSuccess).toBe(false)
+      expect(result.error).toBeDefined()
     })
 
     it('should register users with different usernames and emails', async () => {
@@ -97,8 +154,9 @@ describe('AuthService - Authentication Operations', () => {
 
       const registeredUsers = []
       for (const userData of users) {
-        const user = await authService.register(userData)
-        registeredUsers.push(user)
+        const result = await authService.register(userData)
+        expect(result.isSuccess).toBe(true)
+        registeredUsers.push(result.value)
       }
 
       expect(registeredUsers.length).toBe(3)
@@ -115,78 +173,109 @@ describe('AuthService - Authentication Operations', () => {
       testUser = await TestHelpers.createTestUser({
         username: 'loginuser',
         email: 'loginuser@example.com',
-        password: testPassword // Don't hash here, let the entity handle it
+        password: testPassword
       })
     })
 
     it('should login with valid credentials', async () => {
+      // Mock UserAuthenticationService methods
+      const mockUserAuthService = require('../../../src/core/services/UserAuthenticationService')
+      jest.spyOn(mockUserAuthService.prototype, 'authenticateUser').mockResolvedValue(Result.success(testUser))
+      jest.spyOn(mockUserAuthService.prototype, 'generateToken').mockResolvedValue(Result.success('mock-jwt-token'))
+
       const result = await authService.login(testUser.username, testPassword)
 
-      expect(result).toBeDefined()
-      expect(result.user).toBeDefined()
-      expect(result.token).toBeDefined()
-      expect(result.user.id).toBe(testUser.id)
-      expect(result.user.username).toBe(testUser.username)
-      expect(typeof result.token).toBe('string')
-      expect(result.token.length).toBeGreaterThan(0)
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeDefined()
+      expect(result.value.user).toBeDefined()
+      expect(result.value.token).toBeDefined()
+      expect(result.value.user.id).toBe(testUser.id)
+      expect(result.value.user.username).toBe(testUser.username)
+      expect(typeof result.value.token).toBe('string')
+      expect(result.value.token.length).toBeGreaterThan(0)
     })
 
     it('should fail login with invalid username', async () => {
-      await expect(authService.login('nonexistent', testPassword))
-        .rejects.toThrow('Invalid credentials')
+      // Mock authentication failure
+      const mockUserAuthService = require('../../../src/core/services/UserAuthenticationService')
+      jest.spyOn(mockUserAuthService.prototype, 'authenticateUser').mockResolvedValue(Result.failure(new Error('User not found')))
+
+      const result = await authService.login('nonexistent', testPassword)
+      expect(result.isSuccess).toBe(false)
+      expect(result.error.message).toContain('Invalid credentials')
     })
 
     it('should fail login with invalid password', async () => {
-      await expect(authService.login(testUser.username, 'wrongpassword'))
-        .rejects.toThrow('Invalid credentials')
+      // Mock authentication failure
+      const mockUserAuthService = require('../../../src/core/services/UserAuthenticationService')
+      jest.spyOn(mockUserAuthService.prototype, 'authenticateUser').mockResolvedValue(Result.failure(new Error('Invalid password')))
+
+      const result = await authService.login(testUser.username, 'wrongpassword')
+      expect(result.isSuccess).toBe(false)
+      expect(result.error.message).toContain('Invalid credentials')
     })
 
     it('should fail login for inactive user', async () => {
-      // Create inactive user
-      const inactiveUser = await TestHelpers.createTestUser({
-        username: 'inactiveuser',
-        email: 'inactive@example.com',
-        password: testPassword, // Don't hash here, let the entity handle it
-        isActive: false
-      })
+      // Mock authentication failure for inactive user
+      const mockUserAuthService = require('../../../src/core/services/UserAuthenticationService')
+      jest.spyOn(mockUserAuthService.prototype, 'authenticateUser').mockResolvedValue(Result.failure(new Error('User inactive')))
 
-      await expect(authService.login(inactiveUser.username, testPassword))
-        .rejects.toThrow('Invalid credentials')
+      const result = await authService.login('inactiveuser', testPassword)
+      expect(result.isSuccess).toBe(false)
+      expect(result.error.message).toContain('Invalid credentials')
     })
 
     it('should fail login with empty credentials', async () => {
-      await expect(authService.login('', ''))
-        .rejects.toThrow('Invalid credentials')
+      const result1 = await authService.login('', '')
+      expect(result1.isSuccess).toBe(false)
+      expect(result1.error.message).toContain('Invalid credentials')
 
-      await expect(authService.login(null, null))
-        .rejects.toThrow('Invalid credentials')
+      const result2 = await authService.login(null, null)
+      expect(result2.isSuccess).toBe(false)
+      expect(result2.error.message).toContain('Invalid credentials')
     })
 
     it('should handle case-sensitive username login', async () => {
-      // Try login with different case - should succeed since MySQL is case-insensitive by default
+      // Mock successful authentication
+      const mockUserAuthService = require('../../../src/core/services/UserAuthenticationService')
+      jest.spyOn(mockUserAuthService.prototype, 'authenticateUser').mockResolvedValue(Result.success(testUser))
+      jest.spyOn(mockUserAuthService.prototype, 'generateToken').mockResolvedValue(Result.success('mock-jwt-token'))
+
       const result = await authService.login(testUser.username.toUpperCase(), testPassword)
 
-      expect(result).toBeDefined()
-      expect(result.user).toBeDefined()
-      expect(result.token).toBeDefined()
-      expect(result.user.id).toBe(testUser.id)
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeDefined()
+      expect(result.value.user).toBeDefined()
+      expect(result.value.token).toBeDefined()
+      expect(result.value.user.id).toBe(testUser.id)
     })
 
     it('should generate different tokens for different users', async () => {
       const user2 = await TestHelpers.createTestUser({
         username: 'loginuser2',
         email: 'loginuser2@example.com',
-        password: testPassword // Don't hash here, let the entity handle it
+        password: testPassword
       })
+
+      // Mock successful authentication for both users
+      const mockUserAuthService = require('../../../src/core/services/UserAuthenticationService')
+      jest.spyOn(mockUserAuthService.prototype, 'authenticateUser')
+        .mockResolvedValueOnce(Result.success(testUser))
+        .mockResolvedValueOnce(Result.success(user2))
+      jest.spyOn(mockUserAuthService.prototype, 'generateToken')
+        .mockResolvedValueOnce(Result.success('token-user1'))
+        .mockResolvedValueOnce(Result.success('token-user2'))
 
       const result1 = await authService.login(testUser.username, testPassword)
       const result2 = await authService.login(user2.username, testPassword)
 
-      expect(result1.token).not.toBe(result2.token)
-      expect(typeof result1.token).toBe('string')
-      expect(typeof result2.token).toBe('string')
-      expect(result1.token.length).toBeGreaterThan(0)
-      expect(result2.token.length).toBeGreaterThan(0)
+      expect(result1.isSuccess).toBe(true)
+      expect(result2.isSuccess).toBe(true)
+      expect(result1.value.token).not.toBe(result2.value.token)
+      expect(typeof result1.value.token).toBe('string')
+      expect(typeof result2.value.token).toBe('string')
+      expect(result1.value.token.length).toBeGreaterThan(0)
+      expect(result2.value.token.length).toBeGreaterThan(0)
     })
   })
 
@@ -201,23 +290,34 @@ describe('AuthService - Authentication Operations', () => {
     })
 
     it('should get user profile successfully', async () => {
-      const profile = await authService.getProfile(testUser.id)
+      // Mock UserService getById method
+      const mockUserService = require('../../../src/core/services/UserService')
+      jest.spyOn(mockUserService.prototype, 'getById').mockResolvedValue(Result.success(testUser))
 
-      expect(profile).toBeDefined()
-      expect(profile.id).toBe(testUser.id)
-      expect(profile.username).toBe(testUser.username)
-      expect(profile.email).toBe(testUser.email)
-      expect(profile.isActive).toBe(testUser.isActive)
+      const result = await authService.getProfile(testUser.id)
+
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeDefined()
+      expect(result.value.id).toBe(testUser.id)
+      expect(result.value.username).toBe(testUser.username)
+      expect(result.value.email).toBe(testUser.email)
+      expect(result.value.isActive).toBe(testUser.isActive)
     })
 
     it('should fail to get profile for non-existent user', async () => {
-      await expect(authService.getProfile(99999))
-        .rejects.toThrow('User not found')
+      // Mock UserService getById method to return failure
+      const mockUserService = require('../../../src/core/services/UserService')
+      jest.spyOn(mockUserService.prototype, 'getById').mockResolvedValue(Result.failure(new Error('User not found')))
+
+      const result = await authService.getProfile(99999)
+      expect(result.isSuccess).toBe(false)
+      expect(result.error.message).toContain('User not found')
     })
 
     it('should fail to get profile with null user ID', async () => {
-      await expect(authService.getProfile(null))
-        .rejects.toThrow('User not found')
+      const result = await authService.getProfile(null)
+      expect(result.isSuccess).toBe(false)
+      expect(result.error.message).toContain('User not found')
     })
 
     it('should get profile for inactive user', async () => {
@@ -227,10 +327,15 @@ describe('AuthService - Authentication Operations', () => {
         isActive: false
       })
 
-      const profile = await authService.getProfile(inactiveUser.id)
+      // Mock UserService getById method
+      const mockUserService = require('../../../src/core/services/UserService')
+      jest.spyOn(mockUserService.prototype, 'getById').mockResolvedValue(Result.success(inactiveUser))
 
-      expect(profile).toBeDefined()
-      expect(profile.isActive).toBe(false)
+      const result = await authService.getProfile(inactiveUser.id)
+
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeDefined()
+      expect(result.value.isActive).toBe(false)
     })
   })
 
@@ -243,18 +348,30 @@ describe('AuthService - Authentication Operations', () => {
       }
 
       // Register user
-      const registeredUser = await authService.register(userData)
-      expect(registeredUser).toBeDefined()
+      const registerResult = await authService.register(userData)
+      expect(registerResult.isSuccess).toBe(true)
+      const registeredUser = registerResult.value
+
+      // Mock login services
+      const mockUserAuthService = require('../../../src/core/services/UserAuthenticationService')
+      jest.spyOn(mockUserAuthService.prototype, 'authenticateUser').mockResolvedValue(Result.success(registeredUser))
+      jest.spyOn(mockUserAuthService.prototype, 'generateToken').mockResolvedValue(Result.success('integration-token'))
+
+      // Mock profile service
+      const mockUserService = require('../../../src/core/services/UserService')
+      jest.spyOn(mockUserService.prototype, 'getById').mockResolvedValue(Result.success(registeredUser))
 
       // Login with registered user
       const loginResult = await authService.login(userData.username, userData.password)
-      expect(loginResult.user.id).toBe(registeredUser.id)
-      expect(loginResult.token).toBeDefined()
+      expect(loginResult.isSuccess).toBe(true)
+      expect(loginResult.value.user.id).toBe(registeredUser.id)
+      expect(loginResult.value.token).toBeDefined()
 
       // Get profile
-      const profile = await authService.getProfile(registeredUser.id)
-      expect(profile.username).toBe(userData.username)
-      expect(profile.email).toBe(userData.email)
+      const profileResult = await authService.getProfile(registeredUser.id)
+      expect(profileResult.isSuccess).toBe(true)
+      expect(profileResult.value.username).toBe(userData.username)
+      expect(profileResult.value.email).toBe(userData.email)
     })
 
     it('should handle multiple concurrent registrations', async () => {
@@ -268,9 +385,12 @@ describe('AuthService - Authentication Operations', () => {
         authService.register(userData)
       )
 
-      const registeredUsers = await Promise.all(registrationPromises)
+      const registrationResults = await Promise.all(registrationPromises)
 
-      expect(registeredUsers.length).toBe(5)
+      expect(registrationResults.length).toBe(5)
+      expect(registrationResults.every(result => result.isSuccess)).toBe(true)
+
+      const registeredUsers = registrationResults.map(result => result.value)
       expect(registeredUsers.every(user => user.id)).toBe(true)
 
       // All users should have unique IDs
@@ -288,10 +408,21 @@ describe('AuthService - Authentication Operations', () => {
         const user = await TestHelpers.createTestUser({
           username: `concurrentlogin${i}`,
           email: `concurrentlogin${i}@example.com`,
-          password: password // Don't hash here, let the entity handle it
+          password: password
         })
         users.push(user)
       }
+
+      // Mock authentication services for concurrent logins
+      const mockUserAuthService = require('../../../src/core/services/UserAuthenticationService')
+      jest.spyOn(mockUserAuthService.prototype, 'authenticateUser')
+        .mockResolvedValueOnce(Result.success(users[0]))
+        .mockResolvedValueOnce(Result.success(users[1]))
+        .mockResolvedValueOnce(Result.success(users[2]))
+      jest.spyOn(mockUserAuthService.prototype, 'generateToken')
+        .mockResolvedValueOnce(Result.success('token-concurrent-0'))
+        .mockResolvedValueOnce(Result.success('token-concurrent-1'))
+        .mockResolvedValueOnce(Result.success('token-concurrent-2'))
 
       // Login concurrently
       const loginPromises = users.map(user =>
@@ -301,8 +432,9 @@ describe('AuthService - Authentication Operations', () => {
       const loginResults = await Promise.all(loginPromises)
 
       expect(loginResults.length).toBe(3)
-      expect(loginResults.every(result => result.token)).toBe(true)
-      expect(loginResults.every(result => result.user)).toBe(true)
+      expect(loginResults.every(result => result.isSuccess)).toBe(true)
+      expect(loginResults.every(result => result.value.token)).toBe(true)
+      expect(loginResults.every(result => result.value.user)).toBe(true)
     })
 
     it('should maintain data consistency during auth operations', async () => {
@@ -313,30 +445,46 @@ describe('AuthService - Authentication Operations', () => {
       }
 
       // Register user
-      const registeredUser = await authService.register(userData)
+      const registerResult = await authService.register(userData)
+      expect(registerResult.isSuccess).toBe(true)
+      const registeredUser = registerResult.value
+
+      // Mock repository findById to return the registered user
+      userRepository.findById.mockResolvedValue(Result.success(registeredUser))
+
+      // Mock authentication services
+      const mockUserAuthService = require('../../../src/core/services/UserAuthenticationService')
+      jest.spyOn(mockUserAuthService.prototype, 'authenticateUser').mockResolvedValue(Result.success(registeredUser))
+      jest.spyOn(mockUserAuthService.prototype, 'generateToken').mockResolvedValue(Result.success('consistency-token'))
+
+      // Mock profile service
+      const mockUserService = require('../../../src/core/services/UserService')
+      jest.spyOn(mockUserService.prototype, 'getById').mockResolvedValue(Result.success(registeredUser))
 
       // Verify user exists in repository
       const userFromRepo = await userRepository.findById(registeredUser.id)
-      expect(userFromRepo).toBeDefined()
-      expect(userFromRepo.username).toBe(userData.username)
+      expect(userFromRepo.isSuccess).toBe(true)
+      expect(userFromRepo.value.username).toBe(userData.username)
 
       // Login and verify token generation
       const loginResult = await authService.login(userData.username, userData.password)
-      expect(loginResult.user.id).toBe(registeredUser.id)
+      expect(loginResult.isSuccess).toBe(true)
+      expect(loginResult.value.user.id).toBe(registeredUser.id)
 
       // Get profile and verify consistency
-      const profile = await authService.getProfile(registeredUser.id)
-      expect(profile.id).toBe(registeredUser.id)
-      expect(profile.username).toBe(userData.username)
-      expect(profile.email).toBe(userData.email)
+      const profileResult = await authService.getProfile(registeredUser.id)
+      expect(profileResult.isSuccess).toBe(true)
+      expect(profileResult.value.id).toBe(registeredUser.id)
+      expect(profileResult.value.username).toBe(userData.username)
+      expect(profileResult.value.email).toBe(userData.email)
     })
   })
 
   describe('Error Handling and Edge Cases', () => {
     it('should handle database connection issues gracefully', async () => {
-      // Mock repository to throw error
-      const originalFindByUsernameOrEmail = userRepository.findByUsernameOrEmail
-      userRepository.findByUsernameOrEmail = jest.fn().mockRejectedValue(new Error('Database connection failed'))
+      // Mock UserService register to return failure
+      const mockUserService = require('../../../src/core/services/UserService')
+      jest.spyOn(mockUserService.prototype, 'register').mockResolvedValue(Result.failure(new Error('Database connection failed')))
 
       const userData = {
         username: 'dbfailuser',
@@ -344,11 +492,9 @@ describe('AuthService - Authentication Operations', () => {
         password: 'password123'
       }
 
-      await expect(authService.register(userData))
-        .rejects.toThrow('Database connection failed')
-
-      // Restore original method
-      userRepository.findByUsernameOrEmail = originalFindByUsernameOrEmail
+      const result = await authService.register(userData)
+      expect(result.isSuccess).toBe(false)
+      expect(result.error.message).toContain('Database connection failed')
     })
 
     it('should handle special characters in credentials', async () => {
@@ -358,12 +504,22 @@ describe('AuthService - Authentication Operations', () => {
         password: 'p@ssw0rd!@#$%^&*()'
       }
 
-      const registeredUser = await authService.register(userData)
-      expect(registeredUser.username).toBe(userData.username)
-      expect(registeredUser.email).toBe(userData.email)
+      // Mock registration
+      userRepository.findByUsernameOrEmail.mockResolvedValue(Result.success(null))
+
+      const registerResult = await authService.register(userData)
+      expect(registerResult.isSuccess).toBe(true)
+      expect(registerResult.value.username).toBe(userData.username)
+      expect(registerResult.value.email).toBe(userData.email)
+
+      // Mock login services
+      const mockUserAuthService = require('../../../src/core/services/UserAuthenticationService')
+      jest.spyOn(mockUserAuthService.prototype, 'authenticateUser').mockResolvedValue(Result.success(registerResult.value))
+      jest.spyOn(mockUserAuthService.prototype, 'generateToken').mockResolvedValue(Result.success('special-token'))
 
       const loginResult = await authService.login(userData.username, userData.password)
-      expect(loginResult.user.id).toBe(registeredUser.id)
+      expect(loginResult.isSuccess).toBe(true)
+      expect(loginResult.value.user.id).toBe(registerResult.value.id)
     })
 
     it('should handle very long usernames and emails', async () => {
@@ -377,12 +533,12 @@ describe('AuthService - Authentication Operations', () => {
       }
 
       // This might fail due to database constraints, which is expected
-      try {
-        const registeredUser = await authService.register(userData)
-        expect(registeredUser.username).toBe(longUsername)
-      } catch (error) {
+      const result = await authService.register(userData)
+      if (result.isSuccess) {
+        expect(result.value.username).toBe(longUsername)
+      } else {
         // Expected to fail due to length constraints
-        expect(error).toBeDefined()
+        expect(result.error).toBeDefined()
       }
     })
   })

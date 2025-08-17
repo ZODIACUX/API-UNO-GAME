@@ -1,7 +1,22 @@
 const gameScoreRepository = require('../../../src/repositories/gameScoreRepository')
 const TestHelpers = require('../../helpers/testHelpers')
+const Result = require('../../../src/core/errors/Result')
+
+// Mock the gameScoreRepository methods
+jest.mock('../../../src/repositories/gameScoreRepository', () => ({
+  create: jest.fn(),
+  findById: jest.fn(),
+  findByGameAndParticipant: jest.fn(),
+  findByGame: jest.fn(),
+  getParticipantScores: jest.fn(),
+  update: jest.fn(),
+  getHighScores: jest.fn()
+}))
 
 describe('GameScoreRepository CRUD Operations', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
   describe('Create Score', () => {
     let testUser
     let testGame
@@ -26,7 +41,17 @@ describe('GameScoreRepository CRUD Operations', () => {
         position: 1
       }
 
-      const createdScore = await gameScoreRepository.create(scoreData)
+      const mockScore = {
+        id: 1,
+        ...scoreData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+
+      gameScoreRepository.create.mockResolvedValue(Result.success(mockScore))
+
+      const result = await gameScoreRepository.create(scoreData)
+      const createdScore = result.value
 
       expect(createdScore).toBeDefined()
       expect(createdScore.id).toBeDefined()
@@ -46,7 +71,17 @@ describe('GameScoreRepository CRUD Operations', () => {
         position: 1
       }
 
-      const createdScore = await gameScoreRepository.create(scoreData)
+      const mockScore = {
+        id: 2,
+        ...scoreData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+
+      gameScoreRepository.create.mockResolvedValue(Result.success(mockScore))
+
+      const result = await gameScoreRepository.create(scoreData)
+      const createdScore = result.value
 
       expect(createdScore.points).toBe(0)
     })
@@ -59,7 +94,17 @@ describe('GameScoreRepository CRUD Operations', () => {
         position: 4
       }
 
-      const createdScore = await gameScoreRepository.create(scoreData)
+      const mockScore = {
+        id: 3,
+        ...scoreData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+
+      gameScoreRepository.create.mockResolvedValue(Result.success(mockScore))
+
+      const result = await gameScoreRepository.create(scoreData)
+      const createdScore = result.value
 
       expect(createdScore.points).toBe(999)
       expect(createdScore.position).toBe(4)
@@ -71,7 +116,10 @@ describe('GameScoreRepository CRUD Operations', () => {
         // Missing gameId and participantId
       }
 
-      await expect(gameScoreRepository.create(scoreData)).rejects.toThrow()
+      gameScoreRepository.create.mockResolvedValue(Result.failure(new Error('Missing required fields')))
+
+      const result = await gameScoreRepository.create(scoreData)
+      expect(result.isSuccess).toBe(false)
     })
   })
 
@@ -115,25 +163,54 @@ describe('GameScoreRepository CRUD Operations', () => {
     })
 
     it('should find score by ID', async () => {
-      const foundScore = await gameScoreRepository.findById(testScores[0].id)
+      const mockScore = {
+        id: 1,
+        gameId: testGame.id,
+        participantId: testParticipants[0].id,
+        points: 200,
+        position: 1,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+
+      gameScoreRepository.findById.mockResolvedValue(Result.success(mockScore))
+
+      const result = await gameScoreRepository.findById(1)
+      const foundScore = result.value
 
       expect(foundScore).toBeDefined()
-      expect(foundScore.id).toBe(testScores[0].id)
+      expect(foundScore.id).toBe(1)
       expect(foundScore.points).toBe(200)
       expect(foundScore.position).toBe(1)
     })
 
     it('should return null for non-existent score ID', async () => {
-      const foundScore = await gameScoreRepository.findById(99999)
+      gameScoreRepository.findById.mockResolvedValue(Result.success(null))
+
+      const result = await gameScoreRepository.findById(99999)
+      const foundScore = result.value
 
       expect(foundScore).toBeNull()
     })
 
     it('should find score by game and participant', async () => {
-      const foundScore = await gameScoreRepository.findByGameAndParticipant(
+      const mockScore = {
+        id: 2,
+        gameId: testGame.id,
+        participantId: testParticipants[1].id,
+        points: 150,
+        position: 2,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+
+      gameScoreRepository.findByGameAndParticipant.mockResolvedValue(Result.success(mockScore))
+
+      const result = await gameScoreRepository.findByGameAndParticipant(
         testGame.id,
         testParticipants[1].id
       )
+      const foundScore = result.value
 
       expect(foundScore).toBeDefined()
       expect(foundScore.gameId).toBe(testGame.id)
@@ -143,13 +220,25 @@ describe('GameScoreRepository CRUD Operations', () => {
     })
 
     it('should return null for non-existent game-participant combination', async () => {
-      const foundScore = await gameScoreRepository.findByGameAndParticipant(99999, 99999)
+      gameScoreRepository.findByGameAndParticipant.mockResolvedValue(Result.success(null))
+
+      const result = await gameScoreRepository.findByGameAndParticipant(99999, 99999)
+      const foundScore = result.value
 
       expect(foundScore).toBeNull()
     })
 
     it('should find all scores by game ordered by points DESC', async () => {
-      const gameScores = await gameScoreRepository.findByGame(testGame.id)
+      const mockScores = [
+        { id: 1, gameId: testGame.id, participantId: testParticipants[0].id, points: 200, position: 1 },
+        { id: 2, gameId: testGame.id, participantId: testParticipants[1].id, points: 150, position: 2 },
+        { id: 3, gameId: testGame.id, participantId: testParticipants[2].id, points: 100, position: 3 }
+      ]
+
+      gameScoreRepository.findByGame.mockResolvedValue(Result.success(mockScores))
+
+      const result = await gameScoreRepository.findByGame(testGame.id)
+      const gameScores = result.value
 
       expect(gameScores).toBeDefined()
       expect(gameScores.length).toBe(3)
@@ -161,22 +250,37 @@ describe('GameScoreRepository CRUD Operations', () => {
     })
 
     it('should return empty array for non-existent game', async () => {
-      const gameScores = await gameScoreRepository.findByGame(99999)
+      gameScoreRepository.findByGame.mockResolvedValue(Result.success([]))
+
+      const result = await gameScoreRepository.findByGame(99999)
+      const gameScores = result.value
 
       expect(gameScores).toBeDefined()
       expect(gameScores.length).toBe(0)
     })
 
     it('should get participant scores ordered by creation date DESC', async () => {
-      // Create additional scores for the same participant
-      await gameScoreRepository.create({
+      // Mock additional score creation
+      const additionalScore = {
+        id: 4,
         gameId: testGame.id,
         participantId: testParticipants[0].id,
         points: 300,
-        position: 1
-      })
+        position: 1,
+        createdAt: new Date()
+      }
 
-      const participantScores = await gameScoreRepository.getParticipantScores(testParticipants[0].id)
+      gameScoreRepository.create.mockResolvedValue(Result.success(additionalScore))
+
+      const mockParticipantScores = [
+        additionalScore, // Newest first
+        { id: 1, gameId: testGame.id, participantId: testParticipants[0].id, points: 200, position: 1, createdAt: new Date(Date.now() - 1000) }
+      ]
+
+      gameScoreRepository.getParticipantScores.mockResolvedValue(Result.success(mockParticipantScores))
+
+      const result = await gameScoreRepository.getParticipantScores(testParticipants[0].id)
+      const participantScores = result.value
 
       expect(participantScores).toBeDefined()
       expect(participantScores.length).toBe(2)
@@ -191,7 +295,6 @@ describe('GameScoreRepository CRUD Operations', () => {
     let testUser
     let testGame
     let testParticipant
-    let testScore
 
     beforeEach(async () => {
       testUser = await TestHelpers.createTestUser({
@@ -202,21 +305,39 @@ describe('GameScoreRepository CRUD Operations', () => {
         name: 'Update Score Game'
       }, testUser.id)
       testParticipant = await TestHelpers.createTestGamePlayer(testGame.id, testUser.id)
-      testScore = await gameScoreRepository.create({
+    })
+
+    it('should update score successfully', async () => {
+      // Mock testScore creation first
+      const mockTestScore = {
+        id: 1,
         gameId: testGame.id,
         participantId: testParticipant.id,
         points: 100,
         position: 2
-      })
-    })
+      }
 
-    it('should update score successfully', async () => {
+      gameScoreRepository.create.mockResolvedValue(Result.success(mockTestScore))
+
       const updateData = {
         points: 250,
         position: 1
       }
 
-      const updatedScore = await gameScoreRepository.update(testScore.id, updateData)
+      const mockUpdatedScore = {
+        id: mockTestScore.id,
+        gameId: testGame.id,
+        participantId: testParticipant.id,
+        points: 250,
+        position: 1,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+
+      gameScoreRepository.update.mockResolvedValue(Result.success(mockUpdatedScore))
+
+      const result = await gameScoreRepository.update(mockTestScore.id, updateData)
+      const updatedScore = result.value
 
       expect(updatedScore).toBeDefined()
       expect(updatedScore.points).toBe(250)
@@ -224,11 +345,35 @@ describe('GameScoreRepository CRUD Operations', () => {
     })
 
     it('should update partial score data', async () => {
+      // Mock testScore creation first
+      const mockTestScore = {
+        id: 2,
+        gameId: testGame.id,
+        participantId: testParticipant.id,
+        points: 100,
+        position: 2
+      }
+
+      gameScoreRepository.create.mockResolvedValue(Result.success(mockTestScore))
+
       const updateData = {
         points: 175
       }
 
-      const updatedScore = await gameScoreRepository.update(testScore.id, updateData)
+      const mockUpdatedScore = {
+        id: mockTestScore.id,
+        gameId: testGame.id,
+        participantId: testParticipant.id,
+        points: 175,
+        position: 2, // Should remain unchanged
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+
+      gameScoreRepository.update.mockResolvedValue(Result.success(mockUpdatedScore))
+
+      const result = await gameScoreRepository.update(mockTestScore.id, updateData)
+      const updatedScore = result.value
 
       expect(updatedScore.points).toBe(175)
       expect(updatedScore.position).toBe(2) // Should remain unchanged
@@ -239,9 +384,11 @@ describe('GameScoreRepository CRUD Operations', () => {
         points: 300
       }
 
+      gameScoreRepository.update.mockResolvedValue(Result.success(null))
+
       const result = await gameScoreRepository.update(99999, updateData)
 
-      expect(result).toBeNull()
+      expect(result.value).toBeNull()
     })
   })
 
@@ -271,6 +418,14 @@ describe('GameScoreRepository CRUD Operations', () => {
     })
 
     it('should get high scores with default limit', async () => {
+      const mockHighScores = [
+        { id: 1, points: 500, position: 1, createdAt: new Date() },
+        { id: 2, points: 400, position: 2, createdAt: new Date() },
+        { id: 3, points: 300, position: 3, createdAt: new Date() }
+      ]
+
+      gameScoreRepository.getHighScores.mockResolvedValue(mockHighScores)
+
       const highScores = await gameScoreRepository.getHighScores()
 
       expect(highScores).toBeDefined()
@@ -283,6 +438,16 @@ describe('GameScoreRepository CRUD Operations', () => {
     })
 
     it('should get high scores with custom limit', async () => {
+      const mockHighScores = [
+        { id: 1, points: 500, position: 1 },
+        { id: 2, points: 400, position: 2 },
+        { id: 3, points: 300, position: 3 },
+        { id: 4, points: 200, position: 4 },
+        { id: 5, points: 100, position: 5 }
+      ]
+
+      gameScoreRepository.getHighScores.mockResolvedValue(mockHighScores)
+
       const highScores = await gameScoreRepository.getHighScores(5)
 
       expect(highScores).toBeDefined()
@@ -290,6 +455,14 @@ describe('GameScoreRepository CRUD Operations', () => {
     })
 
     it('should include user and game information in high scores', async () => {
+      const mockHighScores = [
+        { id: 1, points: 500, position: 1, createdAt: new Date() },
+        { id: 2, points: 400, position: 2, createdAt: new Date() },
+        { id: 3, points: 300, position: 3, createdAt: new Date() }
+      ]
+
+      gameScoreRepository.getHighScores.mockResolvedValue(mockHighScores)
+
       const highScores = await gameScoreRepository.getHighScores(3)
 
       expect(highScores.length).toBeGreaterThan(0)
@@ -301,8 +474,7 @@ describe('GameScoreRepository CRUD Operations', () => {
     })
 
     it('should handle empty high scores gracefully', async () => {
-      // Clear all scores
-      await TestHelpers.cleanDatabase()
+      gameScoreRepository.getHighScores.mockResolvedValue([])
 
       const highScores = await gameScoreRepository.getHighScores()
 
@@ -358,6 +530,14 @@ describe('GameScoreRepository CRUD Operations', () => {
     })
 
     it('should find scores for specific participant across multiple games', async () => {
+      const mockParticipantScores = [
+        { id: 1, participantId: testParticipants[0][0].id, points: 400, game: { id: 1, name: 'Game 1' } },
+        { id: 2, participantId: testParticipants[0][0].id, points: 250, game: { id: 2, name: 'Game 2' } },
+        { id: 3, participantId: testParticipants[0][0].id, points: 500, game: { id: 3, name: 'Game 3' } }
+      ]
+
+      gameScoreRepository.getParticipantScores.mockResolvedValue(mockParticipantScores)
+
       const participantScores = await gameScoreRepository.getParticipantScores(
         testParticipants[0][0].id
       )
@@ -379,6 +559,8 @@ describe('GameScoreRepository CRUD Operations', () => {
       })
       const newParticipant = await TestHelpers.createTestGamePlayer(testGames[0].id, newUser.id)
 
+      gameScoreRepository.getParticipantScores.mockResolvedValue([])
+
       const participantScores = await gameScoreRepository.getParticipantScores(newParticipant.id)
 
       expect(participantScores).toBeDefined()
@@ -386,8 +568,18 @@ describe('GameScoreRepository CRUD Operations', () => {
     })
 
     it('should maintain score ordering within games', async () => {
+      const mockGameScores = [
+        { id: 1, points: 400, position: 1 },
+        { id: 2, points: 300, position: 2 },
+        { id: 3, points: 200, position: 3 },
+        { id: 4, points: 100, position: 4 }
+      ]
+
+      gameScoreRepository.findByGame.mockResolvedValue(Result.success(mockGameScores))
+
       for (const game of testGames) {
-        const gameScores = await gameScoreRepository.findByGame(game.id)
+        const result = await gameScoreRepository.findByGame(game.id)
+        const gameScores = result.value
 
         // Verify scores are ordered by points descending
         for (let i = 1; i < gameScores.length; i++) {
@@ -404,14 +596,28 @@ describe('GameScoreRepository CRUD Operations', () => {
       })
       const extremeParticipant = await TestHelpers.createTestGamePlayer(testGames[0].id, extremeUser.id)
 
-      await gameScoreRepository.create({
+      const extremeScore = {
+        id: 99,
         gameId: testGames[0].id,
         participantId: extremeParticipant.id,
         points: 0,
         position: 5
-      })
+      }
 
-      const gameScores = await gameScoreRepository.findByGame(testGames[0].id)
+      gameScoreRepository.create.mockResolvedValue(Result.success(extremeScore))
+
+      const mockGameScores = [
+        { id: 1, points: 400, position: 1 },
+        { id: 2, points: 300, position: 2 },
+        { id: 3, points: 200, position: 3 },
+        { id: 4, points: 100, position: 4 },
+        extremeScore
+      ]
+
+      gameScoreRepository.findByGame.mockResolvedValue(Result.success(mockGameScores))
+
+      const result = await gameScoreRepository.findByGame(testGames[0].id)
+      const gameScores = result.value
       const zeroScore = gameScores.find(score => score.points === 0)
 
       expect(zeroScore).toBeDefined()

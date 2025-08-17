@@ -1,5 +1,5 @@
-import gameService from '../services/GameService.js'
-import logger from '../utils-api/logger.js'
+const gameService = require('../services/GameService')
+const logger = require('../utils-api/logger')
 
 const createGame = async (req, res) => {
   try {
@@ -197,7 +197,7 @@ const getScores = async (req, res) => {
   }
 }
 
-export {
+module.exports = {
   createGame,
   joinGame,
   startGame,

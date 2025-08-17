@@ -22,6 +22,10 @@ module.exports = {
     'quotes': ['error', 'single'],
     'indent': ['error', 2],
     'no-trailing-spaces': 'error',
-    'eol-last': ['error', 'always']
+    'eol-last': ['error', 'always'],
+    'no-unused-vars': ['error', {
+      'argsIgnorePattern': '^_',
+      'varsIgnorePattern': '^_'
+    }]
   }
 }

@@ -2,7 +2,7 @@ const gamePlayerService = require('../services/gamePlayerService')
 const { handleResponse, handleError } = require('../utils-api/responseHelper')
 
 class GamePlayerController {
-  async joinGame(req, res) {
+  joinGame = async (req, res) => {
     try {
       const { gameId } = req.params
       const userId = req.user.id
@@ -14,7 +14,7 @@ class GamePlayerController {
     }
   }
 
-  async leaveGame(req, res) {
+  leaveGame = async (req, res) => {
     try {
       const { gameId } = req.params
       const userId = req.user.id
@@ -26,7 +26,7 @@ class GamePlayerController {
     }
   }
 
-  async setReady(req, res) {
+  setReady = async (req, res) => {
     try {
       const { gameId } = req.params
       const { isReady } = req.body
@@ -39,7 +39,7 @@ class GamePlayerController {
     }
   }
 
-  async getGamePlayers(req, res) {
+  getGamePlayers = async (req, res) => {
     try {
       const { gameId } = req.params
 

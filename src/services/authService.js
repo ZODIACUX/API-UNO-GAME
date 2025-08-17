@@ -1,69 +1,58 @@
+const UserService = require('../core/services/UserService')
+const UserAuthenticationService = require('../core/services/UserAuthenticationService')
+const AuthenticationService = require('../core/services/AuthenticationService')
 const userRepository = require('../repositories/userRepository')
-const { generateToken } = require('../middleware/auth')
+const Result = require('../core/errors/Result')
 
 class AuthService {
+  constructor() {
+    this.userService = new UserService(userRepository)
+    this.userAuthService = new UserAuthenticationService(userRepository, process.env.JWT_SECRET)
+    this.authService = new AuthenticationService(userRepository)
+  }
+
   async register(userData) {
-    const { username, email, password } = userData
-
-    // Verificar si el usuario ya existe
-    const existingUser = await userRepository.findByUsernameOrEmail(username, email)
-
-    if (existingUser) {
-      throw new Error('User already exists')
-    }
-
-    // Crear nuevo usuario
-    const user = await userRepository.create({
-      username,
-      email,
-      password
-    })
-
-    return user
+    return await this.userService.register(userData)
   }
 
   async login(username, password) {
-    // Validate input
-    if (!username || !password) {
-      throw new Error('Invalid credentials')
-    }
+    return Result.fromAsync(async () => {
+      if (!username || !password) {
+        throw new Error('Invalid credentials')
+      }
 
-    // Buscar usuario con contraseña incluida
-    const user = await userRepository.findByUsernameWithPassword(username)
+      // Use UserAuthenticationService to authenticate user
+      const authResult = await this.userAuthService.authenticateUser(username, password)
+      if (!authResult.isSuccess) {
+        throw new Error('Invalid credentials')
+      }
 
-    if (!user || !user.isActive) {
-      throw new Error('Invalid credentials')
-    }
+      const user = authResult.value
 
-    // Verificar contraseña
-    const isValidPassword = await user.comparePassword(password)
+      // Generate token using UserAuthenticationService
+      const tokenResult = await this.userAuthService.generateToken(user.id, user.username)
+      if (!tokenResult.isSuccess) {
+        throw new Error('Failed to generate token')
+      }
 
-    if (!isValidPassword) {
-      throw new Error('Invalid credentials')
-    }
-
-    // Generar token
-    const token = generateToken(user.id)
-
-    // Retornar usuario sin contraseña
-    // eslint-disable-next-line no-unused-vars
-    const { password: _, ...userWithoutPassword } = user
-    return { user: userWithoutPassword, token }
+      // Remove password from user object
+      const userWithoutPassword = { ...user }
+      delete userWithoutPassword.password
+      return { user: userWithoutPassword, token: tokenResult.value }
+    })
   }
 
   async getProfile(userId) {
-    // Validate input
     if (!userId || userId === null || userId === undefined) {
-      throw new Error('User not found')
+      return Result.failure(new Error('User not found'))
     }
 
-    const user = await userRepository.findById(userId)
-
-    if (!user) {
-      throw new Error('User not found')
+    const userResult = await this.userService.getById(userId)
+    if (!userResult.isSuccess) {
+      return Result.failure(new Error('User not found'))
     }
 
-    return user
+    return Result.success(userResult.value)
   }
 }
 

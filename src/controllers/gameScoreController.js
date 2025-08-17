@@ -2,7 +2,7 @@ const gameScoreService = require('../services/gameScoreService')
 const { handleResponse, handleError } = require('../utils-api/responseHelper')
 
 class GameScoreController {
-  async createScore(req, res) {
+  createScore = async (req, res) => {
     try {
       const scoreData = req.body
       const score = await gameScoreService.createScore(scoreData)
@@ -12,7 +12,7 @@ class GameScoreController {
     }
   }
 
-  async updateScore(req, res) {
+  updateScore = async (req, res) => {
     try {
       const { id } = req.params
       const scoreData = req.body
@@ -23,7 +23,7 @@ class GameScoreController {
     }
   }
 
-  async getGameScores(req, res) {
+  getGameScores = async (req, res) => {
     try {
       const { gameId } = req.params
       const scores = await gameScoreService.getGameScores(gameId)
@@ -33,7 +33,7 @@ class GameScoreController {
     }
   }
 
-  async getParticipantScores(req, res) {
+  getParticipantScores = async (req, res) => {
     try {
       const { participantId } = req.params
       const scores = await gameScoreService.getParticipantScores(participantId)
@@ -43,7 +43,7 @@ class GameScoreController {
     }
   }
 
-  async getHighScores(req, res) {
+  getHighScores = async (req, res) => {
     try {
       const { limit } = req.query
       const highScores = await gameScoreService.getHighScores(limit)
@@ -53,7 +53,7 @@ class GameScoreController {
     }
   }
 
-  async calculateFinalScores(req, res) {
+  calculateFinalScores = async (req, res) => {
     try {
       const { gameId } = req.params
       const { participants } = req.body

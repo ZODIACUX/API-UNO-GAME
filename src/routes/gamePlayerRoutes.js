@@ -1,11 +1,11 @@
 const express = require('express')
 const router = express.Router()
 const gamePlayerController = require('../controllers/gamePlayerController')
-const authMiddleware = require('../middleware/auth')
+const { authenticateToken } = require('../middleware/auth')
 const { validateGameId, validateReadyStatus } = require('../validation/gameValidation')
 
 // Middleware de autenticación para todas las rutas
-router.use(authMiddleware)
+router.use(authenticateToken)
 
 // GET /api/games/:gameId/players - Obtener todos los jugadores de un juego
 router.get('/:gameId/players', validateGameId, gamePlayerController.getGamePlayers)

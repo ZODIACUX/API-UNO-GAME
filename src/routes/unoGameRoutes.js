@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const unoGameController = require('../controllers/unoGameController')
-const authMiddleware = require('../middleware/auth')
+const { authenticateToken } = require('../middleware/auth')
 const {
   validateCreateGame,
   validatePlayCard,
@@ -9,7 +9,7 @@ const {
 } = require('../validation/unoGameValidation')
 
 // Middleware de autenticación para todas las rutas
-router.use(authMiddleware)
+router.use(authenticateToken)
 
 // GET /api/uno/games - Obtener todos los juegos
 router.get('/games', unoGameController.getAllGames)

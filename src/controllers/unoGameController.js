@@ -2,7 +2,7 @@ const unoGameService = require('../services/unoGameService')
 const { handleResponse, handleError } = require('../utils-api/responseHelper')
 
 class UnoGameController {
-  async createGame(req, res) {
+  createGame = async (req, res) => {
     try {
       const { name, maxPlayers } = req.body
       const creatorId = req.user.id
@@ -13,7 +13,7 @@ class UnoGameController {
     }
   }
 
-  async getGame(req, res) {
+  getGame = async (req, res) => {
     try {
       const { id } = req.params
       const game = await unoGameService.getGame(id)
@@ -23,7 +23,7 @@ class UnoGameController {
     }
   }
 
-  async getAllGames(req, res) {
+  getAllGames = async (req, res) => {
     try {
       const games = await unoGameService.getAllGames()
       return handleResponse(res, 200, 'Games retrieved successfully', games)
@@ -32,7 +32,7 @@ class UnoGameController {
     }
   }
 
-  async getActiveGames(req, res) {
+  getActiveGames = async (req, res) => {
     try {
       const games = await unoGameService.getActiveGames()
       return handleResponse(res, 200, 'Active games retrieved successfully', games)
@@ -41,7 +41,7 @@ class UnoGameController {
     }
   }
 
-  async startGame(req, res) {
+  startGame = async (req, res) => {
     try {
       const { id } = req.params
       const game = await unoGameService.startGame(id)
@@ -51,7 +51,7 @@ class UnoGameController {
     }
   }
 
-  async playCard(req, res) {
+  playCard = async (req, res) => {
     try {
       const { id } = req.params
       const { cardId } = req.body
@@ -63,7 +63,7 @@ class UnoGameController {
     }
   }
 
-  async drawCard(req, res) {
+  drawCard = async (req, res) => {
     try {
       const { id } = req.params
       const playerId = req.user.id

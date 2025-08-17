@@ -3,6 +3,9 @@ const express = require('express')
 const cors = require('cors')
 const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
+const ServiceRegistration = require('./core/di/ServiceRegistration')
+
+ServiceRegistration.register()
 
 const app = express()
 
@@ -30,14 +33,15 @@ app.get('/health', (req, res) => {
 })
 
 // Middleware de manejo de errores
-app.use((err, req, res, _next) => {
-  console.error(err.stack)
-  res.status(500).json({ error: 'Something went wrong!' })
-})
+const ErrorHandler = require('./core/middleware/ErrorHandler')
 
 // Middleware para rutas no encontradas
-app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Route not found' })
-})
+app.use('*', ErrorHandler.notFound)
+
+// Middleware de validación de errores
+app.use(ErrorHandler.validation)
+
+// Middleware principal de manejo de errores
+app.use(ErrorHandler.handle)
 
 module.exports = app

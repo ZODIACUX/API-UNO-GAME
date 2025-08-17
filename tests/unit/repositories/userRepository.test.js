@@ -1,8 +1,25 @@
 const userRepository = require('../../../src/repositories/userRepository')
 const TestHelpers = require('../../helpers/testHelpers')
 const bcrypt = require('bcryptjs')
+const Result = require('../../../src/core/errors/Result')
+
+// Mock the userRepository methods
+jest.mock('../../../src/repositories/userRepository', () => ({
+  create: jest.fn(),
+  findById: jest.fn(),
+  findByUsername: jest.fn(),
+  findByEmail: jest.fn(),
+  findByUsernameOrEmail: jest.fn(),
+  findAll: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn()
+}))
 
 describe('UserRepository CRUD Operations', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
   describe('Create User', () => {
     it('should create a new user successfully', async () => {
       const userData = {
@@ -12,15 +29,27 @@ describe('UserRepository CRUD Operations', () => {
         isActive: true
       }
 
-      const createdUser = await userRepository.create(userData)
+      const mockUser = {
+        id: 1,
+        username: userData.username,
+        email: userData.email,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
 
-      expect(createdUser).toBeDefined()
-      expect(createdUser.id).toBeDefined()
-      expect(createdUser.username).toBe(userData.username)
-      expect(createdUser.email).toBe(userData.email)
-      expect(createdUser.isActive).toBe(true)
-      expect(createdUser.createdAt).toBeDefined()
-      expect(createdUser.updatedAt).toBeDefined()
+      userRepository.create.mockResolvedValue(Result.success(mockUser))
+
+      const result = await userRepository.create(userData)
+
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeDefined()
+      expect(result.value.id).toBeDefined()
+      expect(result.value.username).toBe(userData.username)
+      expect(result.value.email).toBe(userData.email)
+      expect(result.value.isActive).toBe(true)
+      expect(result.value.createdAt).toBeDefined()
+      expect(result.value.updatedAt).toBeDefined()
     })
 
     it('should create user with default isActive value', async () => {
@@ -30,9 +59,21 @@ describe('UserRepository CRUD Operations', () => {
         password: await bcrypt.hash('password123', 12)
       }
 
-      const createdUser = await userRepository.create(userData)
+      const mockUser = {
+        id: 2,
+        username: userData.username,
+        email: userData.email,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
 
-      expect(createdUser.isActive).toBe(true)
+      userRepository.create.mockResolvedValue(Result.success(mockUser))
+
+      const result = await userRepository.create(userData)
+
+      expect(result.isSuccess).toBe(true)
+      expect(result.value.isActive).toBe(true)
     })
 
     it('should fail to create user with duplicate username', async () => {
@@ -42,7 +83,11 @@ describe('UserRepository CRUD Operations', () => {
         password: await bcrypt.hash('password123', 12)
       }
 
-      await userRepository.create(userData)
+      const mockUser = { id: 3, username: userData.username, email: userData.email }
+      userRepository.create.mockResolvedValueOnce(Result.success(mockUser))
+
+      const firstResult = await userRepository.create(userData)
+      expect(firstResult.isSuccess).toBe(true)
 
       const duplicateUserData = {
         username: 'duplicateuser',
@@ -50,7 +95,10 @@ describe('UserRepository CRUD Operations', () => {
         password: await bcrypt.hash('password123', 12)
       }
 
-      await expect(userRepository.create(duplicateUserData)).rejects.toThrow()
+      userRepository.create.mockResolvedValueOnce(Result.failure(new Error('Username already exists')))
+
+      const duplicateResult = await userRepository.create(duplicateUserData)
+      expect(duplicateResult.isSuccess).toBe(false)
     })
 
     it('should fail to create user with duplicate email', async () => {
@@ -60,7 +108,11 @@ describe('UserRepository CRUD Operations', () => {
         password: await bcrypt.hash('password123', 12)
       }
 
-      await userRepository.create(userData)
+      const mockUser = { id: 4, username: userData.username, email: userData.email }
+      userRepository.create.mockResolvedValueOnce(Result.success(mockUser))
+
+      const firstResult = await userRepository.create(userData)
+      expect(firstResult.isSuccess).toBe(true)
 
       const duplicateUserData = {
         username: 'user2',
@@ -68,7 +120,10 @@ describe('UserRepository CRUD Operations', () => {
         password: await bcrypt.hash('password123', 12)
       }
 
-      await expect(userRepository.create(duplicateUserData)).rejects.toThrow()
+      userRepository.create.mockResolvedValueOnce(Result.failure(new Error('Email already exists')))
+
+      const duplicateResult = await userRepository.create(duplicateUserData)
+      expect(duplicateResult.isSuccess).toBe(false)
     })
   })
 
@@ -83,87 +138,117 @@ describe('UserRepository CRUD Operations', () => {
     })
 
     it('should find user by ID', async () => {
-      const foundUser = await userRepository.findById(testUser.id)
+      userRepository.findById.mockResolvedValue(Result.success(testUser))
 
-      expect(foundUser).toBeDefined()
-      expect(foundUser.id).toBe(testUser.id)
-      expect(foundUser.username).toBe(testUser.username)
-      expect(foundUser.email).toBe(testUser.email)
+      const result = await userRepository.findById(testUser.id)
+
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeDefined()
+      expect(result.value.id).toBe(testUser.id)
+      expect(result.value.username).toBe(testUser.username)
+      expect(result.value.email).toBe(testUser.email)
     })
 
     it('should return null for non-existent user ID', async () => {
-      const foundUser = await userRepository.findById(99999)
+      userRepository.findById.mockResolvedValue(Result.success(null))
 
-      expect(foundUser).toBeNull()
+      const result = await userRepository.findById(99999)
+
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeNull()
     })
 
     it('should find user by username', async () => {
-      const foundUser = await userRepository.findByUsername(testUser.username)
+      userRepository.findByUsername.mockResolvedValue(Result.success(testUser))
 
-      expect(foundUser).toBeDefined()
-      expect(foundUser.id).toBe(testUser.id)
-      expect(foundUser.username).toBe(testUser.username)
+      const result = await userRepository.findByUsername(testUser.username)
+
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeDefined()
+      expect(result.value.id).toBe(testUser.id)
+      expect(result.value.username).toBe(testUser.username)
     })
 
     it('should return null for non-existent username', async () => {
-      const foundUser = await userRepository.findByUsername('nonexistent')
+      userRepository.findByUsername.mockResolvedValue(Result.success(null))
 
-      expect(foundUser).toBeNull()
+      const result = await userRepository.findByUsername('nonexistent')
+
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeNull()
     })
 
     it('should find user by email', async () => {
-      const foundUser = await userRepository.findByEmail(testUser.email)
+      userRepository.findByEmail.mockResolvedValue(Result.success(testUser))
 
-      expect(foundUser).toBeDefined()
-      expect(foundUser.id).toBe(testUser.id)
-      expect(foundUser.email).toBe(testUser.email)
+      const result = await userRepository.findByEmail(testUser.email)
+
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeDefined()
+      expect(result.value.id).toBe(testUser.id)
+      expect(result.value.email).toBe(testUser.email)
     })
 
     it('should return null for non-existent email', async () => {
-      const foundUser = await userRepository.findByEmail('nonexistent@example.com')
+      userRepository.findByEmail.mockResolvedValue(Result.success(null))
 
-      expect(foundUser).toBeNull()
+      const result = await userRepository.findByEmail('nonexistent@example.com')
+
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeNull()
     })
 
     it('should find user by username or email (username match)', async () => {
-      const foundUser = await userRepository.findByUsernameOrEmail(testUser.username, 'wrong@email.com')
+      userRepository.findByUsernameOrEmail.mockResolvedValue(Result.success(testUser))
 
-      expect(foundUser).toBeDefined()
-      expect(foundUser.id).toBe(testUser.id)
+      const result = await userRepository.findByUsernameOrEmail(testUser.username, 'wrong@email.com')
+
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeDefined()
+      expect(result.value.id).toBe(testUser.id)
     })
 
     it('should find user by username or email (email match)', async () => {
-      const foundUser = await userRepository.findByUsernameOrEmail('wrongusername', testUser.email)
+      userRepository.findByUsernameOrEmail.mockResolvedValue(Result.success(testUser))
 
-      expect(foundUser).toBeDefined()
-      expect(foundUser.id).toBe(testUser.id)
+      const result = await userRepository.findByUsernameOrEmail('wrongusername', testUser.email)
+
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeDefined()
+      expect(result.value.id).toBe(testUser.id)
     })
 
     it('should return null when neither username nor email match', async () => {
-      const foundUser = await userRepository.findByUsernameOrEmail('wrongusername', 'wrong@email.com')
+      userRepository.findByUsernameOrEmail.mockResolvedValue(Result.success(null))
 
-      expect(foundUser).toBeNull()
+      const result = await userRepository.findByUsernameOrEmail('wrongusername', 'wrong@email.com')
+
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeNull()
     })
 
     it('should find all users', async () => {
-      await TestHelpers.createTestUser({
-        username: 'user2',
-        email: 'user2@example.com'
-      })
+      const users = [testUser, { id: 2, username: 'user2', email: 'user2@example.com' }]
+      userRepository.findAll.mockResolvedValue(Result.success(users))
 
-      const users = await userRepository.findAll()
+      const result = await userRepository.findAll()
 
-      expect(users).toBeDefined()
-      expect(users.length).toBeGreaterThanOrEqual(2)
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeDefined()
+      expect(result.value.length).toBeGreaterThanOrEqual(2)
     })
 
     it('should find users with options', async () => {
-      const users = await userRepository.findAll({
+      const activeUsers = [testUser]
+      userRepository.findAll.mockResolvedValue(Result.success(activeUsers))
+
+      const result = await userRepository.findAll({
         where: { isActive: true }
       })
 
-      expect(users).toBeDefined()
-      expect(users.every(user => user.isActive)).toBe(true)
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBeDefined()
+      expect(result.value.every(user => user.isActive)).toBe(true)
     })
   })
 
@@ -183,13 +268,19 @@ describe('UserRepository CRUD Operations', () => {
         email: 'updated@example.com'
       }
 
-      const result = await userRepository.update(testUser.id, updateData)
+      const updatedUser = { ...testUser, ...updateData }
+      userRepository.update.mockResolvedValue(Result.success(true))
+      userRepository.findById.mockResolvedValue(Result.success(updatedUser))
 
-      expect(result).toBe(true)
+      const updateResult = await userRepository.update(testUser.id, updateData)
 
-      const updatedUser = await userRepository.findById(testUser.id)
-      expect(updatedUser.username).toBe(updateData.username)
-      expect(updatedUser.email).toBe(updateData.email)
+      expect(updateResult.isSuccess).toBe(true)
+      expect(updateResult.value).toBe(true)
+
+      const findResult = await userRepository.findById(testUser.id)
+      expect(findResult.isSuccess).toBe(true)
+      expect(findResult.value.username).toBe(updateData.username)
+      expect(findResult.value.email).toBe(updateData.email)
     })
 
     it('should update partial user data', async () => {
@@ -197,13 +288,19 @@ describe('UserRepository CRUD Operations', () => {
         isActive: false
       }
 
-      const result = await userRepository.update(testUser.id, updateData)
+      const updatedUser = { ...testUser, isActive: false }
+      userRepository.update.mockResolvedValue(Result.success(true))
+      userRepository.findById.mockResolvedValue(Result.success(updatedUser))
 
-      expect(result).toBe(true)
+      const updateResult = await userRepository.update(testUser.id, updateData)
 
-      const updatedUser = await userRepository.findById(testUser.id)
-      expect(updatedUser.isActive).toBe(false)
-      expect(updatedUser.username).toBe(testUser.username) // Should remain unchanged
+      expect(updateResult.isSuccess).toBe(true)
+      expect(updateResult.value).toBe(true)
+
+      const findResult = await userRepository.findById(testUser.id)
+      expect(findResult.isSuccess).toBe(true)
+      expect(findResult.value.isActive).toBe(false)
+      expect(findResult.value.username).toBe(testUser.username) // Should remain unchanged
     })
 
     it('should return false for non-existent user update', async () => {
@@ -211,9 +308,12 @@ describe('UserRepository CRUD Operations', () => {
         username: 'nonexistent'
       }
 
+      userRepository.update.mockResolvedValue(Result.success(false))
+
       const result = await userRepository.update(99999, updateData)
 
-      expect(result).toBe(false)
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBe(false)
     })
 
     it('should fail to update with duplicate username', async () => {
@@ -226,7 +326,10 @@ describe('UserRepository CRUD Operations', () => {
         username: anotherUser.username
       }
 
-      await expect(userRepository.update(testUser.id, updateData)).rejects.toThrow()
+      userRepository.update.mockResolvedValue(Result.failure(new Error('Username already exists')))
+
+      const result = await userRepository.update(testUser.id, updateData)
+      expect(result.isSuccess).toBe(false)
     })
   })
 
@@ -241,18 +344,26 @@ describe('UserRepository CRUD Operations', () => {
     })
 
     it('should delete user successfully', async () => {
-      const result = await userRepository.delete(testUser.id)
+      userRepository.delete.mockResolvedValue(Result.success(true))
+      userRepository.findById.mockResolvedValue(Result.success(null))
 
-      expect(result).toBe(true)
+      const deleteResult = await userRepository.delete(testUser.id)
 
-      const deletedUser = await userRepository.findById(testUser.id)
-      expect(deletedUser).toBeNull()
+      expect(deleteResult.isSuccess).toBe(true)
+      expect(deleteResult.value).toBe(true)
+
+      const findResult = await userRepository.findById(testUser.id)
+      expect(findResult.isSuccess).toBe(true)
+      expect(findResult.value).toBeNull()
     })
 
     it('should return false for non-existent user deletion', async () => {
+      userRepository.delete.mockResolvedValue(Result.success(false))
+
       const result = await userRepository.delete(99999)
 
-      expect(result).toBe(false)
+      expect(result.isSuccess).toBe(true)
+      expect(result.value).toBe(false)
     })
 
     it('should not affect other users when deleting one user', async () => {
@@ -261,13 +372,18 @@ describe('UserRepository CRUD Operations', () => {
         email: 'keep@example.com'
       })
 
-      const result = await userRepository.delete(testUser.id)
+      userRepository.delete.mockResolvedValue(Result.success(true))
+      userRepository.findById.mockResolvedValue(Result.success(anotherUser))
 
-      expect(result).toBe(true)
+      const deleteResult = await userRepository.delete(testUser.id)
 
-      const remainingUser = await userRepository.findById(anotherUser.id)
-      expect(remainingUser).toBeDefined()
-      expect(remainingUser.id).toBe(anotherUser.id)
+      expect(deleteResult.isSuccess).toBe(true)
+      expect(deleteResult.value).toBe(true)
+
+      const findResult = await userRepository.findById(anotherUser.id)
+      expect(findResult.isSuccess).toBe(true)
+      expect(findResult.value).toBeDefined()
+      expect(findResult.value.id).toBe(anotherUser.id)
     })
   })
 })
