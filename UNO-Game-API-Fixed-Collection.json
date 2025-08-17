@@ -1,0 +1,539 @@
+{
+	"info": {
+		"_postman_id": "fixed-uno-api-2025",
+		"name": "UNO Game API - Fixed Working Collection",
+		"description": "Colección corregida con las rutas exactas que funcionan en la API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "0. Health & Info",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["health"]
+						},
+						"description": "Verifica que el servidor esté funcionando"
+					}
+				},
+				{
+					"name": "API Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}",
+							"host": ["{{apiUrl}}"]
+						},
+						"description": "Obtiene información sobre endpoints disponibles"
+					}
+				}
+			]
+		},
+		{
+			"name": "1. Authentication (WORKING ✅)",
+			"item": [
+				{
+					"name": "1.1 Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response has success message', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.message).to.include('successfully');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{apiUrl}}/auth/register",
+							"host": ["{{apiUrl}}"],
+							"path": ["auth", "register"]
+						},
+						"description": "✅ FUNCIONA - Registra un nuevo usuario"
+					}
+				},
+				{
+					"name": "1.2 Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has access token', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('access_token');",
+									"    pm.collectionVariables.set('accessToken', responseJson.access_token);",
+									"    console.log('✅ Token guardado correctamente');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{apiUrl}}/auth/login",
+							"host": ["{{apiUrl}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "✅ FUNCIONA - Inicia sesión y obtiene token JWT"
+					}
+				},
+				{
+					"name": "1.3 Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{apiUrl}}/auth/profile",
+							"host": ["{{apiUrl}}"],
+							"path": ["auth", "profile"]
+						},
+						"description": "✅ FUNCIONA - Obtiene perfil del usuario autenticado"
+					}
+				},
+				{
+					"name": "1.4 Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{apiUrl}}/auth/logout",
+							"host": ["{{apiUrl}}"],
+							"path": ["auth", "logout"]
+						},
+						"description": "✅ FUNCIONA - Cierra sesión"
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Game Participants",
+			"item": [
+				{
+					"name": "2.1 Join Game",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{apiUrl}}/participants/games/{{gameId}}/join",
+							"host": ["{{apiUrl}}"],
+							"path": ["participants", "games", "{{gameId}}", "join"]
+						},
+						"description": "Se une a un juego"
+					}
+				},
+				{
+					"name": "2.2 Leave Game",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{apiUrl}}/participants/games/{{gameId}}/leave",
+							"host": ["{{apiUrl}}"],
+							"path": ["participants", "games", "{{gameId}}", "leave"]
+						},
+						"description": "Abandona un juego"
+					}
+				},
+				{
+					"name": "2.3 Get Game Participants",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/participants/games/{{gameId}}/participants",
+							"host": ["{{apiUrl}}"],
+							"path": ["participants", "games", "{{gameId}}", "participants"]
+						},
+						"description": "Obtiene participantes de un juego"
+					}
+				},
+				{
+					"name": "2.4 Get Leaderboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/participants/leaderboard",
+							"host": ["{{apiUrl}}"],
+							"path": ["participants", "leaderboard"]
+						},
+						"description": "Obtiene tabla de líderes"
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Game Scores",
+			"item": [
+				{
+					"name": "3.1 Get All Scores",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{apiUrl}}/scores",
+							"host": ["{{apiUrl}}"],
+							"path": ["scores"]
+						},
+						"description": "Obtiene todas las puntuaciones"
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Cards (Requires Auth)",
+			"item": [
+				{
+					"name": "4.1 Get All Cards",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{apiUrl}}/cards",
+							"host": ["{{apiUrl}}"],
+							"path": ["cards"]
+						},
+						"description": "⚠️ Requiere autenticación - Obtiene todas las cartas"
+					}
+				},
+				{
+					"name": "4.2 Get Card by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{apiUrl}}/cards/1",
+							"host": ["{{apiUrl}}"],
+							"path": ["cards", "1"]
+						},
+						"description": "Obtiene carta por ID"
+					}
+				},
+				{
+					"name": "4.3 Create Card",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"number\",\n  \"color\": \"red\",\n  \"value\": \"5\"\n}"
+						},
+						"url": {
+							"raw": "{{apiUrl}}/cards",
+							"host": ["{{apiUrl}}"],
+							"path": ["cards"]
+						},
+						"description": "Crea una nueva carta"
+					}
+				}
+			]
+		},
+		{
+			"name": "5. UNO Games",
+			"item": [
+				{
+					"name": "5.1 Get All Games",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{apiUrl}}/uno-games/games",
+							"host": ["{{apiUrl}}"],
+							"path": ["uno-games", "games"]
+						},
+						"description": "Obtiene todos los juegos UNO"
+					}
+				},
+				{
+					"name": "5.2 Create Game",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.data && responseJson.data.id) {",
+									"        pm.collectionVariables.set('gameId', responseJson.data.id.toString());",
+									"        console.log('✅ Game ID guardado:', responseJson.data.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Mi Juego UNO\",\n  \"rules\": \"Reglas estándar\",\n  \"maxPlayers\": 4\n}"
+						},
+						"url": {
+							"raw": "{{apiUrl}}/uno-games/games",
+							"host": ["{{apiUrl}}"],
+							"path": ["uno-games", "games"]
+						},
+						"description": "Crea un nuevo juego UNO"
+					}
+				}
+			]
+		},
+		{
+			"name": "6. Error Testing",
+			"item": [
+				{
+					"name": "6.1 Wrong Register URL (Should Fail)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"test\",\n  \"email\": \"test@test.com\",\n  \"password\": \"test123\"\n}"
+						},
+						"url": {
+							"raw": "{{apiUrl}}/register",
+							"host": ["{{apiUrl}}"],
+							"path": ["register"]
+						},
+						"description": "❌ Esta URL está mal - debería fallar con 404"
+					}
+				},
+				{
+					"name": "6.2 Access Cards Without Auth",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/cards",
+							"host": ["{{apiUrl}}"],
+							"path": ["cards"]
+						},
+						"description": "❌ Sin autenticación - debería fallar"
+					}
+				},
+				{
+					"name": "6.3 Invalid Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"wrongpassword\"\n}"
+						},
+						"url": {
+							"raw": "{{apiUrl}}/auth/login",
+							"host": ["{{apiUrl}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "❌ Credenciales incorrectas - debería fallar"
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Verificar configuración antes de cada request",
+					"console.log('🔍 Verificando configuración...');",
+					"console.log('Base URL:', pm.collectionVariables.get('baseUrl'));",
+					"console.log('API URL:', pm.collectionVariables.get('apiUrl'));",
+					"",
+					"// Verificar token si es necesario",
+					"if (pm.request.headers && pm.request.headers.get('Authorization')) {",
+					"    const token = pm.collectionVariables.get('accessToken');",
+					"    if (!token) {",
+					"        console.log('⚠️ Token no configurado. Ejecuta Login primero.');",
+					"    } else {",
+					"        console.log('✅ Token disponible');",
+					"    }",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Log básico para todas las respuestas",
+					"const status = pm.response.status;",
+					"const time = pm.response.responseTime;",
+					"const name = pm.info.requestName;",
+					"",
+					"if (status >= 200 && status < 300) {",
+					"    console.log(`✅ ${name}: ${status} (${time}ms)`);",
+					"} else if (status >= 400) {",
+					"    console.log(`❌ ${name}: ${status} (${time}ms)`);",
+					"    try {",
+					"        const body = pm.response.json();",
+					"        console.log('Error:', body.message || body.error || 'Unknown error');",
+					"    } catch (e) {",
+					"        console.log('Error parsing response body');",
+					"    }",
+					"} else {",
+					"    console.log(`ℹ️ ${name}: ${status} (${time}ms)`);",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "apiUrl",
+			"value": "http://localhost:3000/api",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "gameId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "username",
+			"value": "testuser2025",
+			"type": "string"
+		},
+		{
+			"key": "email",
+			"value": "test2025@example.com",
+			"type": "string"
+		},
+		{
+			"key": "password",
+			"value": "password123",
+			"type": "string"
+		}
+	]
+}

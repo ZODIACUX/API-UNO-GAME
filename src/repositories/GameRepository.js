@@ -1,94 +1,146 @@
-const database = require('../database')
+const BaseRepository = require('../core/repositories/BaseRepository')
+const { AppDataSource } = require('../database/data-source')
+const { UnoGame } = require('../entities/UnoGame')
+const { GamePlayer } = require('../entities/GamePlayer')
+const Result = require('../core/errors/Result')
 
-class GameRepository {
-  async findById(id) {
-    return await database.models.Game.findByPk(id)
+class GameRepository extends BaseRepository {
+  constructor() {
+    super(UnoGame, AppDataSource)
   }
 
   async findByIdWithPlayers(id) {
-    return await database.models.Game.findByPk(id, {
-      include: [{
-        model: database.models.User,
-        through: { model: database.models.GamePlayer },
-        attributes: ['id', 'username']
-      }]
-    })
-  }
+    return Result.fromAsync(async () => {
+      if (!id) {
+        throw new Error('Game ID is required')
+      }
 
-  async create(gameData) {
-    return await database.models.Game.create(gameData)
-  }
+      const repository = await this.getRepository()
+      const game = await repository.findOne({
+        where: { id },
+        relations: ['players', 'players.user']
+      })
 
-  async update(id, gameData) {
-    const [updatedRows] = await database.models.Game.update(gameData, {
-      where: { id }
-    })
-    return updatedRows > 0
-  }
+      if (!game) {
+        throw new Error('Game not found')
+      }
 
-  async delete(id) {
-    const deletedRows = await database.models.Game.destroy({
-      where: { id }
+      return game
     })
-    return deletedRows > 0
   }
 
   async findGamesByCreator(creatorId) {
-    return await database.models.Game.findAll({
-      where: { creatorId }
+    return Result.fromAsync(async () => {
+      if (!creatorId) {
+        throw new Error('Creator ID is required')
+      }
+
+      const repository = await this.getRepository()
+      return await repository.find({
+        where: { creatorId }
+      })
     })
   }
 
   async findGamesByStatus(status) {
-    return await database.models.Game.findAll({
-      where: { status }
+    return Result.fromAsync(async () => {
+      if (!status) {
+        throw new Error('Status is required')
+      }
+
+      const repository = await this.getRepository()
+      return await repository.find({
+        where: { status }
+      })
     })
   }
 
   async getPlayerCount(gameId) {
-    return await database.models.GamePlayer.count({
-      where: { gameId }
+    return Result.fromAsync(async () => {
+      if (!gameId) {
+        throw new Error('Game ID is required')
+      }
+
+      const gamePlayerRepository = AppDataSource.getRepository(GamePlayer)
+      return await gamePlayerRepository.count({
+        where: { gameId }
+      })
     })
   }
 
   async getGamePlayers(gameId) {
-    return await database.models.GamePlayer.findAll({
-      where: { gameId },
-      include: [{
-        model: database.models.User,
-        attributes: ['id', 'username']
-      }],
-      order: [['position', 'ASC']]
+    return Result.fromAsync(async () => {
+      if (!gameId) {
+        throw new Error('Game ID is required')
+      }
+
+      const gamePlayerRepository = AppDataSource.getRepository(GamePlayer)
+      return await gamePlayerRepository.find({
+        where: { gameId },
+        relations: ['user'],
+        order: { position: 'ASC' }
+      })
     })
   }
 
   async addPlayerToGame(userId, gameId, position) {
-    return await database.models.GamePlayer.create({
-      userId,
-      gameId,
-      position
+    return Result.fromAsync(async () => {
+      if (!userId || !gameId || position === undefined) {
+        throw new Error('User ID, Game ID, and position are required')
+      }
+
+      const gamePlayerRepository = AppDataSource.getRepository(GamePlayer)
+      const gamePlayer = gamePlayerRepository.create({
+        userId,
+        gameId,
+        position
+      })
+      return await gamePlayerRepository.save(gamePlayer)
     })
   }
 
   async removePlayerFromGame(userId, gameId) {
-    const deletedRows = await database.models.GamePlayer.destroy({
-      where: { userId, gameId }
+    return Result.fromAsync(async () => {
+      if (!userId || !gameId) {
+        throw new Error('User ID and Game ID are required')
+      }
+
+      const gamePlayerRepository = AppDataSource.getRepository(GamePlayer)
+      const result = await gamePlayerRepository.delete({
+        userId,
+        gameId
+      })
+      return result.affected > 0
     })
-    return deletedRows > 0
   }
 
   async findPlayerInGame(userId, gameId) {
-    return await database.models.GamePlayer.findOne({
-      where: { userId, gameId }
+    return Result.fromAsync(async () => {
+      if (!userId || !gameId) {
+        throw new Error('User ID and Game ID are required')
+      }
+
+      const gamePlayerRepository = AppDataSource.getRepository(GamePlayer)
+      return await gamePlayerRepository.findOne({
+        where: { userId, gameId },
+        relations: ['user']
+      })
     })
   }
 
   async updatePlayerReady(userId, gameId, isReady) {
-    const [updatedRows] = await database.models.GamePlayer.update(
-      { isReady },
-      { where: { userId, gameId } }
-    )
-    return updatedRows > 0
+    return Result.fromAsync(async () => {
+      if (!userId || !gameId || typeof isReady !== 'boolean') {
+        throw new Error('User ID, Game ID, and isReady boolean are required')
+      }
+
+      const gamePlayerRepository = AppDataSource.getRepository(GamePlayer)
+      const result = await gamePlayerRepository.update(
+        { userId, gameId },
+        { isReady }
+      )
+      return result.affected > 0
+    })
   }
 }
 

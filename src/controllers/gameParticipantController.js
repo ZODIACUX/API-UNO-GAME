@@ -2,7 +2,7 @@ const gameParticipantService = require('../services/gameParticipantService')
 const { handleResponse, handleError } = require('../utils-api/responseHelper')
 
 class GameParticipantController {
-  async joinGame(req, res) {
+  joinGame = async (req, res) => {
     try {
       const { id: userId } = req.user
       const { gameId } = req.params
@@ -13,7 +13,7 @@ class GameParticipantController {
     }
   }
 
-  async leaveGame(req, res) {
+  leaveGame = async (req, res) => {
     try {
       const { id: userId } = req.user
       const { gameId } = req.params
@@ -24,7 +24,7 @@ class GameParticipantController {
     }
   }
 
-  async getParticipants(req, res) {
+  getParticipants = async (req, res) => {
     try {
       const { gameId } = req.params
       const participants = await gameParticipantService.getParticipants(gameId)
@@ -34,7 +34,7 @@ class GameParticipantController {
     }
   }
 
-  async getParticipantStats(req, res) {
+  getParticipantStats = async (req, res) => {
     try {
       const { userId } = req.params
       const stats = await gameParticipantService.getParticipantStats(userId)
@@ -44,7 +44,7 @@ class GameParticipantController {
     }
   }
 
-  async getLeaderboard(req, res) {
+  getLeaderboard = async (req, res) => {
     try {
       const { limit } = req.query
       const leaderboard = await gameParticipantService.getLeaderboard(limit)
