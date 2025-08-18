@@ -1,6 +1,7 @@
 const { AppDataSource } = require('../database/data-source')
 const { UnoGame } = require('../entities/UnoGame')
 const { GamePlayer } = require('../entities/GamePlayer')
+// eslint-disable-next-line no-unused-vars
 const { User } = require('../entities/User')
 
 class GameRepository {
