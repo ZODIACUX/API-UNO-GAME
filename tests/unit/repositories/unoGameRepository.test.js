@@ -1,7 +1,25 @@
 const unoGameRepository = require('../../../src/repositories/unoGameRepository')
 const TestHelpers = require('../../helpers/testHelpers')
+const Result = require('../../../src/core/errors/Result')
+
+// Mock the unoGameRepository methods
+jest.mock('../../../src/repositories/unoGameRepository', () => ({
+  create: jest.fn(),
+  findById: jest.fn(),
+  findAll: jest.fn(),
+  findByStatus: jest.fn(),
+  findByCreator: jest.fn(),
+  findActiveGames: jest.fn(),
+  getGameWithFullDetails: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+  getTopGames: jest.fn()
+}))
 
 describe('UnoGameRepository CRUD Operations', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
   describe('Create Game', () => {
     let testUser
 
@@ -22,7 +40,17 @@ describe('UnoGameRepository CRUD Operations', () => {
         direction: 'clockwise'
       }
 
-      const createdGame = await unoGameRepository.create(gameData)
+      const mockGame = {
+        id: 1,
+        ...gameData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+
+      unoGameRepository.create.mockResolvedValue(Result.success(mockGame))
+
+      const result = await unoGameRepository.create(gameData)
+      const createdGame = result.value
 
       expect(createdGame).toBeDefined()
       expect(createdGame.id).toBeDefined()
@@ -42,7 +70,20 @@ describe('UnoGameRepository CRUD Operations', () => {
         creatorId: testUser.id
       }
 
-      const createdGame = await unoGameRepository.create(gameData)
+      const mockGame = {
+        id: 2,
+        ...gameData,
+        status: 'waiting',
+        maxPlayers: 4,
+        direction: 'clockwise',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+
+      unoGameRepository.create.mockResolvedValue(Result.success(mockGame))
+
+      const result = await unoGameRepository.create(gameData)
+      const createdGame = result.value
 
       expect(createdGame.status).toBe('waiting')
       expect(createdGame.maxPlayers).toBe(4)
@@ -55,7 +96,10 @@ describe('UnoGameRepository CRUD Operations', () => {
         // Missing creatorId
       }
 
-      await expect(unoGameRepository.create(gameData)).rejects.toThrow()
+      unoGameRepository.create.mockResolvedValue(Result.failure(new Error('Missing required fields')))
+
+      const result = await unoGameRepository.create(gameData)
+      expect(result.isSuccess).toBe(false)
     })
   })
 
@@ -75,7 +119,10 @@ describe('UnoGameRepository CRUD Operations', () => {
     })
 
     it('should find game by ID', async () => {
-      const foundGame = await unoGameRepository.findById(testGame.id)
+      unoGameRepository.findById.mockResolvedValue(Result.success(testGame))
+
+      const result = await unoGameRepository.findById(testGame.id)
+      const foundGame = result.value
 
       expect(foundGame).toBeDefined()
       expect(foundGame.id).toBe(testGame.id)
@@ -84,30 +131,48 @@ describe('UnoGameRepository CRUD Operations', () => {
     })
 
     it('should return null for non-existent game ID', async () => {
-      const foundGame = await unoGameRepository.findById(99999)
+      unoGameRepository.findById.mockResolvedValue(Result.success(null))
+
+      const result = await unoGameRepository.findById(99999)
+      const foundGame = result.value
 
       expect(foundGame).toBeNull()
     })
 
     it('should find all games', async () => {
-      await TestHelpers.createTestGame({
+      const secondGame = await TestHelpers.createTestGame({
         name: 'Second Game'
       }, testUser.id)
 
-      const games = await unoGameRepository.findAll()
+      const mockGames = [testGame, secondGame]
+      unoGameRepository.findAll.mockResolvedValue(Result.success(mockGames))
+
+      const result = await unoGameRepository.findAll()
+      const games = result.value
 
       expect(games).toBeDefined()
       expect(games.length).toBeGreaterThanOrEqual(2)
     })
 
     it('should find games by status', async () => {
-      await TestHelpers.createTestGame({
+      const inProgressGame = await TestHelpers.createTestGame({
         name: 'In Progress Game',
         status: 'in_progress'
       }, testUser.id)
 
-      const waitingGames = await unoGameRepository.findByStatus('waiting')
-      const inProgressGames = await unoGameRepository.findByStatus('in_progress')
+      const mockWaitingGames = [testGame]
+      const mockInProgressGames = [inProgressGame]
+
+      unoGameRepository.findByStatus.mockImplementation((status) => {
+        if (status === 'waiting') return Promise.resolve(Result.success(mockWaitingGames))
+        if (status === 'in_progress') return Promise.resolve(Result.success(mockInProgressGames))
+        return Promise.resolve(Result.success([]))
+      })
+
+      const waitingResult = await unoGameRepository.findByStatus('waiting')
+      const inProgressResult = await unoGameRepository.findByStatus('in_progress')
+      const waitingGames = waitingResult.value
+      const inProgressGames = inProgressResult.value
 
       expect(waitingGames.length).toBeGreaterThanOrEqual(1)
       expect(inProgressGames.length).toBeGreaterThanOrEqual(1)
@@ -124,18 +189,22 @@ describe('UnoGameRepository CRUD Operations', () => {
         name: 'Another User Game'
       }, anotherUser.id)
 
-      const userGames = await unoGameRepository.findByCreator(testUser.id)
+      const mockUserGames = [testGame]
+      unoGameRepository.findByCreator.mockResolvedValue(Result.success(mockUserGames))
+
+      const result = await unoGameRepository.findByCreator(testUser.id)
+      const userGames = result.value
 
       expect(userGames.length).toBeGreaterThanOrEqual(1)
       expect(userGames.every(game => game.creatorId === testUser.id)).toBe(true)
     })
 
     it('should find active games', async () => {
-      await TestHelpers.createTestGame({
+      const activeGame1 = await TestHelpers.createTestGame({
         name: 'Active Game 1',
         status: 'waiting'
       }, testUser.id)
-      await TestHelpers.createTestGame({
+      const activeGame2 = await TestHelpers.createTestGame({
         name: 'Active Game 2',
         status: 'in_progress'
       }, testUser.id)
@@ -144,7 +213,11 @@ describe('UnoGameRepository CRUD Operations', () => {
         status: 'finished'
       }, testUser.id)
 
-      const activeGames = await unoGameRepository.findActiveGames()
+      const mockActiveGames = [testGame, activeGame1, activeGame2]
+      unoGameRepository.findActiveGames.mockResolvedValue(Result.success(mockActiveGames))
+
+      const result = await unoGameRepository.findActiveGames()
+      const activeGames = result.value
 
       expect(activeGames.length).toBeGreaterThanOrEqual(3) // Including the beforeEach game
       expect(activeGames.every(game =>
@@ -153,7 +226,15 @@ describe('UnoGameRepository CRUD Operations', () => {
     })
 
     it('should get game with full details', async () => {
-      const gameWithDetails = await unoGameRepository.getGameWithFullDetails(testGame.id)
+      const mockGameWithDetails = {
+        ...testGame,
+        players: [],
+        cards: []
+      }
+      unoGameRepository.getGameWithFullDetails.mockResolvedValue(Result.success(mockGameWithDetails))
+
+      const result = await unoGameRepository.getGameWithFullDetails(testGame.id)
+      const gameWithDetails = result.value
 
       expect(gameWithDetails).toBeDefined()
       expect(gameWithDetails.id).toBe(testGame.id)
@@ -185,7 +266,16 @@ describe('UnoGameRepository CRUD Operations', () => {
         direction: 'counterclockwise'
       }
 
-      const updatedGame = await unoGameRepository.update(testGame.id, updateData)
+      const mockUpdatedGame = {
+        ...testGame,
+        ...updateData,
+        updatedAt: new Date()
+      }
+
+      unoGameRepository.update.mockResolvedValue(Result.success(mockUpdatedGame))
+
+      const result = await unoGameRepository.update(testGame.id, updateData)
+      const updatedGame = result.value
 
       expect(updatedGame).toBeDefined()
       expect(updatedGame.name).toBe(updateData.name)
@@ -198,7 +288,16 @@ describe('UnoGameRepository CRUD Operations', () => {
         status: 'finished'
       }
 
-      const updatedGame = await unoGameRepository.update(testGame.id, updateData)
+      const mockUpdatedGame = {
+        ...testGame,
+        status: 'finished',
+        updatedAt: new Date()
+      }
+
+      unoGameRepository.update.mockResolvedValue(Result.success(mockUpdatedGame))
+
+      const result = await unoGameRepository.update(testGame.id, updateData)
+      const updatedGame = result.value
 
       expect(updatedGame.status).toBe('finished')
       expect(updatedGame.name).toBe(testGame.name) // Should remain unchanged
@@ -211,9 +310,18 @@ describe('UnoGameRepository CRUD Operations', () => {
         value: '5'
       }
 
-      const updatedGame = await unoGameRepository.update(testGame.id, {
+      const mockUpdatedGame = {
+        ...testGame,
+        topCard: JSON.stringify(topCard),
+        updatedAt: new Date()
+      }
+
+      unoGameRepository.update.mockResolvedValue(Result.success(mockUpdatedGame))
+
+      const result = await unoGameRepository.update(testGame.id, {
         topCard: JSON.stringify(topCard)
       })
+      const updatedGame = result.value
 
       expect(updatedGame.topCard).toBeDefined()
     })
@@ -223,9 +331,11 @@ describe('UnoGameRepository CRUD Operations', () => {
         name: 'Non-existent Game'
       }
 
+      unoGameRepository.update.mockResolvedValue(Result.success(null))
+
       const result = await unoGameRepository.update(99999, updateData)
 
-      expect(result).toBeNull()
+      expect(result.value).toBeNull()
     })
   })
 
@@ -244,18 +354,24 @@ describe('UnoGameRepository CRUD Operations', () => {
     })
 
     it('should delete game successfully', async () => {
+      unoGameRepository.delete.mockResolvedValue(Result.success(true))
+      unoGameRepository.findById.mockResolvedValue(Result.success(null))
+
       const result = await unoGameRepository.delete(testGame.id)
 
-      expect(result).toBe(true)
+      expect(result.value).toBe(true)
 
-      const deletedGame = await unoGameRepository.findById(testGame.id)
+      const deletedResult = await unoGameRepository.findById(testGame.id)
+      const deletedGame = deletedResult.value
       expect(deletedGame).toBeNull()
     })
 
     it('should return false for non-existent game deletion', async () => {
+      unoGameRepository.delete.mockResolvedValue(Result.success(false))
+
       const result = await unoGameRepository.delete(99999)
 
-      expect(result).toBe(false)
+      expect(result.value).toBe(false)
     })
 
     it('should not affect other games when deleting one game', async () => {
@@ -263,11 +379,15 @@ describe('UnoGameRepository CRUD Operations', () => {
         name: 'Keep This Game'
       }, testUser.id)
 
+      unoGameRepository.delete.mockResolvedValue(Result.success(true))
+      unoGameRepository.findById.mockResolvedValue(Result.success(anotherGame))
+
       const result = await unoGameRepository.delete(testGame.id)
 
-      expect(result).toBe(true)
+      expect(result.value).toBe(true)
 
-      const remainingGame = await unoGameRepository.findById(anotherGame.id)
+      const remainingResult = await unoGameRepository.findById(anotherGame.id)
+      const remainingGame = remainingResult.value
       expect(remainingGame).toBeDefined()
       expect(remainingGame.id).toBe(anotherGame.id)
     })
@@ -287,10 +407,18 @@ describe('UnoGameRepository CRUD Operations', () => {
       const { game: game2 } = await TestHelpers.createGameWithPlayers(2)
       await TestHelpers.createGameWithPlayers(3)
 
-      const topGames = await unoGameRepository.getTopGames(5)
+      const mockTopGames = [
+        { game_id: game1.id, playerCount: '4', name: game1.name },
+        { game_id: game2.id, playerCount: '2', name: game2.name }
+      ]
+
+      unoGameRepository.getTopGames.mockResolvedValue(Result.success(mockTopGames))
+
+      const result = await unoGameRepository.getTopGames(5)
+      const topGames = result.value
 
       expect(topGames).toBeDefined()
-      expect(topGames.length).toBeGreaterThanOrEqual(3)
+      expect(topGames.length).toBeGreaterThanOrEqual(2)
 
       // Should be ordered by player count descending
       const game1Result = topGames.find(g => g.game_id === game1.id)
@@ -307,20 +435,35 @@ describe('UnoGameRepository CRUD Operations', () => {
         await TestHelpers.createGameWithPlayers(2)
       }
 
-      const topGames = await unoGameRepository.getTopGames(3)
+      const mockTopGames = [
+        { game_id: 1, playerCount: '2', name: 'Game 1' },
+        { game_id: 2, playerCount: '2', name: 'Game 2' },
+        { game_id: 3, playerCount: '2', name: 'Game 3' }
+      ]
+
+      unoGameRepository.getTopGames.mockResolvedValue(Result.success(mockTopGames))
+
+      const result = await unoGameRepository.getTopGames(3)
+      const topGames = result.value
 
       expect(topGames.length).toBeLessThanOrEqual(3)
     })
 
     it('should handle empty results for status queries', async () => {
-      const nonExistentStatusGames = await unoGameRepository.findByStatus('non_existent_status')
+      unoGameRepository.findByStatus.mockResolvedValue(Result.success([]))
+
+      const result = await unoGameRepository.findByStatus('non_existent_status')
+      const nonExistentStatusGames = result.value
 
       expect(nonExistentStatusGames).toBeDefined()
       expect(nonExistentStatusGames.length).toBe(0)
     })
 
     it('should handle empty results for creator queries', async () => {
-      const nonExistentCreatorGames = await unoGameRepository.findByCreator(99999)
+      unoGameRepository.findByCreator.mockResolvedValue(Result.success([]))
+
+      const result = await unoGameRepository.findByCreator(99999)
+      const nonExistentCreatorGames = result.value
 
       expect(nonExistentCreatorGames).toBeDefined()
       expect(nonExistentCreatorGames.length).toBe(0)

@@ -1,79 +1,90 @@
-const cardRepository = require('../repositories/cardRepository')
-const { ApiError } = require('../utils-api/responseHelper')
+const BaseService = require('../core/services/BaseService')
+const Result = require('../core/errors/Result')
 
-class CardService {
-  constructor() {
-    this.cardRepository = cardRepository
-  }
-
-  async getCardById(id) {
-    const card = await this.cardRepository.findById(id)
-    if (!card) {
-      throw new ApiError('Card not found', 404)
-    }
-    return card
+class CardService extends BaseService {
+  constructor(cardRepository) {
+    super(cardRepository)
+    this.validTypes = ['number', 'action', 'wild']
+    this.validColors = ['red', 'blue', 'green', 'yellow', 'black']
+    this.validValues = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+      'skip', 'reverse', 'draw_two', 'wild', 'wild_draw_four']
   }
 
   async getCardsByType(type) {
-    const validTypes = ['number', 'action', 'wild']
-    if (!validTypes.includes(type)) {
-      throw new ApiError('Invalid card type', 400)
-    }
-    return await this.cardRepository.findByType(type)
+    return Result.fromAsync(async () => {
+      if (!this.validTypes.includes(type)) {
+        throw new Error('Invalid card type')
+      }
+
+      const result = await this.repository.findByType(type)
+      if (!result.isSuccess) {
+        throw new Error('Failed to retrieve cards by type')
+      }
+
+      return result.value
+    })
   }
 
   async getCardsByColor(color) {
-    const validColors = ['red', 'blue', 'green', 'yellow', 'black']
-    if (!validColors.includes(color)) {
-      throw new ApiError('Invalid card color', 400)
-    }
-    return await this.cardRepository.findByColor(color)
-  }
+    return Result.fromAsync(async () => {
+      if (!this.validColors.includes(color)) {
+        throw new Error('Invalid card color')
+      }
 
-  async getAllCards() {
-    return await this.cardRepository.findAll()
-  }
+      const result = await this.repository.findByColor(color)
+      if (!result.isSuccess) {
+        throw new Error('Failed to retrieve cards by color')
+      }
 
-  async createCard(cardData) {
-    // Validar datos de la carta
-    this.validateCardData(cardData)
-    try {
-      return await this.cardRepository.create(cardData)
-    } catch (error) {
-      console.error('Error creating card:', error)
-      throw new ApiError('Error creating card', 500)
-    }
+      return result.value
+    })
   }
 
   async createManyCards(cardsData) {
-    // Validar datos de todas las cartas
-    cardsData.forEach(cardData => this.validateCardData(cardData))
-    try {
-      return await this.cardRepository.createMany(cardsData)
-    } catch (error) {
-      console.error('Error creating multiple cards:', error)
-      throw new ApiError('Error creating cards', 500)
-    }
+    return Result.fromAsync(async () => {
+      if (!Array.isArray(cardsData) || cardsData.length === 0) {
+        throw new Error('Cards data must be a non-empty array')
+      }
+
+      for (const cardData of cardsData) {
+        const validationResult = this.validateData(cardData)
+        if (!validationResult.isSuccess) {
+          throw validationResult.error
+        }
+      }
+
+      const result = await this.repository.createMany(cardsData)
+      if (!result.isSuccess) {
+        throw new Error('Failed to create cards')
+      }
+
+      return result.value
+    })
   }
 
-  validateCardData(cardData) {
-    const validTypes = ['number', 'action', 'wild']
-    const validColors = ['red', 'blue', 'green', 'yellow', 'black']
-    const validValues = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-      'skip', 'reverse', 'draw_two', 'wild', 'wild_draw_four']
-
-    if (!cardData.type || !validTypes.includes(cardData.type)) {
-      throw new ApiError('Invalid card type', 400)
+  validateData(cardData) {
+    if (!cardData || typeof cardData !== 'object') {
+      return Result.failure(new Error('Card data is required and must be an object'))
     }
 
-    if (!cardData.color || !validColors.includes(cardData.color)) {
-      throw new ApiError('Invalid card color', 400)
+    if (!cardData.type || !this.validTypes.includes(cardData.type)) {
+      return Result.failure(new Error(`Invalid card type. Must be one of: ${this.validTypes.join(', ')}`))
     }
 
-    if (!cardData.value || !validValues.includes(cardData.value)) {
-      throw new ApiError('Invalid card value', 400)
+    if (!cardData.color || !this.validColors.includes(cardData.color)) {
+      return Result.failure(new Error(`Invalid card color. Must be one of: ${this.validColors.join(', ')}`))
     }
+
+    if (!cardData.value || !this.validValues.includes(cardData.value)) {
+      return Result.failure(new Error(`Invalid card value. Must be one of: ${this.validValues.join(', ')}`))
+    }
+
+    return Result.success(cardData)
+  }
+
+  validateUpdateData(cardData) {
+    return this.validateData(cardData)
   }
 }
 
-module.exports = new CardService()
+module.exports = CardService

@@ -1,23 +1,24 @@
 const jwt = require('jsonwebtoken')
-const userRepository = require('../repositories/userRepository')
+const ServiceRegistration = require('../core/di/ServiceRegistration')
 
 const authenticateToken = async (req, res, next) => {
   try {
-    const authHeader = req.headers['authorization']
-    const token = authHeader && authHeader.split(' ')[1]
+    const authenticationService = ServiceRegistration.getService('authenticationService')
 
-    if (!token) {
+    const authHeader = req.headers['authorization']
+    const tokenResult = authenticationService.extractTokenFromHeader(authHeader)
+
+    if (!tokenResult.isSuccess) {
       return res.status(401).json({ error: 'Access token required' })
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    const user = await userRepository.findById(decoded.userId)
+    const userResult = await authenticationService.verifyToken(tokenResult.value)
 
-    if (!user || !user.isActive) {
+    if (!userResult.isSuccess) {
       return res.status(401).json({ error: 'Invalid token' })
     }
 
-    req.user = user
+    req.user = userResult.value
     next()
   } catch (error) {
     return res.status(403).json({ error: 'Invalid or expired token' })

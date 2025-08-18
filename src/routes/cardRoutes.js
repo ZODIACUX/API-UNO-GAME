@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const cardController = require('../controllers/cardController')
-const authMiddleware = require('../middleware/auth')
+const { authenticateToken } = require('../middleware/auth')
 const {
   validateCard,
   validateCards,
@@ -11,7 +11,7 @@ const {
 } = require('../validation/cardValidation')
 
 // Middleware de autenticación para todas las rutas
-router.use(authMiddleware)
+router.use(authenticateToken)
 
 // GET /api/cards - Obtener todas las cartas
 router.get('/', cardController.getAllCards)

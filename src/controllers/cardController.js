@@ -1,67 +1,76 @@
-const cardService = require('../services/cardService')
-const { handleResponse, handleError } = require('../utils-api/responseHelper')
+const BaseController = require('../core/controllers/BaseController')
+const ServiceRegistration = require('../core/di/ServiceRegistration')
+const Result = require('../core/errors/Result')
 
-class CardController {
-  async getCard(req, res) {
-    try {
+class CardController extends BaseController {
+  constructor() {
+    super()
+    this.cardService = ServiceRegistration.getService('cardService')
+  }
+
+  getCard = async (req, res) => {
+    await this.executeAction(async () => {
       const { id } = req.params
-      const card = await cardService.getCardById(id)
-      return handleResponse(res, 200, 'Card retrieved successfully', card)
-    } catch (error) {
-      return handleError(res, error)
-    }
+      if (!id) {
+        return Result.failure(new Error('Card ID is required'))
+      }
+
+      return await this.cardService.getById(id)
+    }, res)
   }
 
-  async getCardsByType(req, res) {
-    try {
+  getCardsByType = async (req, res) => {
+    await this.executeAction(async () => {
       const { type } = req.params
-      const cards = await cardService.getCardsByType(type)
-      return handleResponse(res, 200, 'Cards retrieved successfully', cards)
-    } catch (error) {
-      return handleError(res, error)
-    }
+      if (!type) {
+        return Result.failure(new Error('Card type is required'))
+      }
+
+      return await this.cardService.getCardsByType(type)
+    }, res)
   }
 
-  async getCardsByColor(req, res) {
-    try {
+  getCardsByColor = async (req, res) => {
+    await this.executeAction(async () => {
       const { color } = req.params
-      const cards = await cardService.getCardsByColor(color)
-      return handleResponse(res, 200, 'Cards retrieved successfully', cards)
-    } catch (error) {
-      return handleError(res, error)
-    }
+      if (!color) {
+        return Result.failure(new Error('Card color is required'))
+      }
+
+      return await this.cardService.getCardsByColor(color)
+    }, res)
   }
 
-  async getAllCards(req, res) {
-    try {
-      const cards = await cardService.getAllCards()
-      return handleResponse(res, 200, 'Cards retrieved successfully', cards)
-    } catch (error) {
-      return handleError(res, error)
-    }
+  getAllCards = async (req, res) => {
+    await this.executeAction(async () => {
+      return await this.cardService.getAll()
+    }, res)
   }
 
-  async createCard(req, res) {
-    try {
-      const cardData = req.body
-      const card = await cardService.createCard(cardData)
-      return handleResponse(res, 201, 'Card created successfully', card)
-    } catch (error) {
-      return handleError(res, error)
-    }
+  createCard = async (req, res) => {
+    await this.executeAction(async () => {
+      const validationResult = this.validateRequired(['type', 'color', 'value'], req.body)
+      if (!validationResult.isSuccess) {
+        return validationResult
+      }
+
+      return await this.cardService.create(req.body)
+    }, res, 201)
   }
 
-  async createManyCards(req, res) {
-    try {
+  createManyCards = async (req, res) => {
+    await this.executeAction(async () => {
       const { cards } = req.body
       if (!Array.isArray(cards)) {
-        return handleError(res, { message: 'Cards must be an array', statusCode: 400 })
+        return Result.failure(new Error('Cards must be an array'))
       }
-      const createdCards = await cardService.createManyCards(cards)
-      return handleResponse(res, 201, 'Cards created successfully', createdCards)
-    } catch (error) {
-      return handleError(res, error)
-    }
+
+      if (cards.length === 0) {
+        return Result.failure(new Error('Cards array cannot be empty'))
+      }
+
+      return await this.cardService.createManyCards(cards)
+    }, res, 201)
   }
 }
 
