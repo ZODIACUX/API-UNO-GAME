@@ -1,94 +1,94 @@
-const database = require('../database')
+const { AppDataSource } = require('../database/data-source')
+const { UnoGame } = require('../entities/UnoGame')
+const { GamePlayer } = require('../entities/GamePlayer')
+const { User } = require('../entities/User')
 
 class GameRepository {
   async findById(id) {
-    return await database.models.Game.findByPk(id)
+    const gameRepository = AppDataSource.getRepository(UnoGame)
+    return await gameRepository.findOne({ where: { id } })
   }
 
   async findByIdWithPlayers(id) {
-    return await database.models.Game.findByPk(id, {
-      include: [{
-        model: database.models.User,
-        through: { model: database.models.GamePlayer },
-        attributes: ['id', 'username']
-      }]
+    const gameRepository = AppDataSource.getRepository(UnoGame)
+    return await gameRepository.findOne({
+      where: { id },
+      relations: ['players', 'players.user']
     })
   }
 
   async create(gameData) {
-    return await database.models.Game.create(gameData)
+    const gameRepository = AppDataSource.getRepository(UnoGame)
+    const game = gameRepository.create(gameData)
+    return await gameRepository.save(game)
   }
 
   async update(id, gameData) {
-    const [updatedRows] = await database.models.Game.update(gameData, {
-      where: { id }
-    })
-    return updatedRows > 0
+    const gameRepository = AppDataSource.getRepository(UnoGame)
+    const result = await gameRepository.update(id, gameData)
+    return result.affected > 0
   }
 
   async delete(id) {
-    const deletedRows = await database.models.Game.destroy({
-      where: { id }
-    })
-    return deletedRows > 0
+    const gameRepository = AppDataSource.getRepository(UnoGame)
+    const result = await gameRepository.delete(id)
+    return result.affected > 0
   }
 
   async findGamesByCreator(creatorId) {
-    return await database.models.Game.findAll({
-      where: { creatorId }
-    })
+    const gameRepository = AppDataSource.getRepository(UnoGame)
+    return await gameRepository.find({ where: { creatorId } })
   }
 
   async findGamesByStatus(status) {
-    return await database.models.Game.findAll({
-      where: { status }
-    })
+    const gameRepository = AppDataSource.getRepository(UnoGame)
+    return await gameRepository.find({ where: { status } })
   }
 
   async getPlayerCount(gameId) {
-    return await database.models.GamePlayer.count({
-      where: { gameId }
-    })
+    const playerRepository = AppDataSource.getRepository(GamePlayer)
+    return await playerRepository.count({ where: { gameId } })
   }
 
   async getGamePlayers(gameId) {
-    return await database.models.GamePlayer.findAll({
+    const playerRepository = AppDataSource.getRepository(GamePlayer)
+    return await playerRepository.find({
       where: { gameId },
-      include: [{
-        model: database.models.User,
-        attributes: ['id', 'username']
-      }],
-      order: [['position', 'ASC']]
+      relations: ['user'],
+      order: { position: 'ASC' }
     })
   }
 
   async addPlayerToGame(userId, gameId, position) {
-    return await database.models.GamePlayer.create({
+    const playerRepository = AppDataSource.getRepository(GamePlayer)
+    const player = playerRepository.create({
       userId,
       gameId,
       position
     })
+    return await playerRepository.save(player)
   }
 
   async removePlayerFromGame(userId, gameId) {
-    const deletedRows = await database.models.GamePlayer.destroy({
-      where: { userId, gameId }
-    })
-    return deletedRows > 0
+    const playerRepository = AppDataSource.getRepository(GamePlayer)
+    const result = await playerRepository.delete({ userId, gameId })
+    return result.affected > 0
   }
 
   async findPlayerInGame(userId, gameId) {
-    return await database.models.GamePlayer.findOne({
+    const playerRepository = AppDataSource.getRepository(GamePlayer)
+    return await playerRepository.findOne({
       where: { userId, gameId }
     })
   }
 
   async updatePlayerReady(userId, gameId, isReady) {
-    const [updatedRows] = await database.models.GamePlayer.update(
-      { isReady },
-      { where: { userId, gameId } }
+    const playerRepository = AppDataSource.getRepository(GamePlayer)
+    const result = await playerRepository.update(
+      { userId, gameId },
+      { isReady }
     )
-    return updatedRows > 0
+    return result.affected > 0
   }
 }
 

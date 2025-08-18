@@ -1,57 +1,32 @@
 const { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } = require('typeorm')
 
-@Entity('games')
 class UnoGame {
-    @PrimaryGeneratedColumn()
-      id
-
-    @Column({ type: 'varchar', length: 100 })
-      name
-
-    @Column({ type: 'text', nullable: true })
-      rules
-
-    @Column({
-      type: 'enum',
-      enum: ['waiting', 'in_progress', 'finished'],
-      default: 'waiting'
-    })
-      status
-
-    @Column({ type: 'int', nullable: true })
-      currentPlayerId
-
-    @Column({
-      type: 'enum',
-      enum: ['clockwise', 'counterclockwise'],
-      default: 'clockwise'
-    })
-      direction
-
-    @Column({ type: 'json', nullable: true })
-      topCard
-
-    @Column({ type: 'int' })
-      creatorId
-
-    @Column({ type: 'int', default: 4 })
-      maxPlayers
-
-    @CreateDateColumn()
-      createdAt
-
-    @UpdateDateColumn()
-      updatedAt
-
-    @ManyToOne('User', 'createdGames')
-    @JoinColumn({ name: 'creatorId' })
-      creator
-
-    @OneToMany('GamePlayer', 'game')
-      players
-
-    @OneToMany('GameCard', 'game')
-      cards
 }
+
+// Apply decorators using the functional approach
+Entity('games')(UnoGame)
+PrimaryGeneratedColumn()(UnoGame.prototype, 'id')
+Column({ type: 'varchar', length: 100 })(UnoGame.prototype, 'name')
+Column({ type: 'text', nullable: true })(UnoGame.prototype, 'rules')
+Column({
+  type: 'enum',
+  enum: ['waiting', 'in_progress', 'finished'],
+  default: 'waiting'
+})(UnoGame.prototype, 'status')
+Column({ type: 'int', nullable: true })(UnoGame.prototype, 'currentPlayerId')
+Column({
+  type: 'enum',
+  enum: ['clockwise', 'counterclockwise'],
+  default: 'clockwise'
+})(UnoGame.prototype, 'direction')
+Column({ type: 'json', nullable: true })(UnoGame.prototype, 'topCard')
+Column({ type: 'int' })(UnoGame.prototype, 'creatorId')
+Column({ type: 'int', default: 4 })(UnoGame.prototype, 'maxPlayers')
+CreateDateColumn()(UnoGame.prototype, 'createdAt')
+UpdateDateColumn()(UnoGame.prototype, 'updatedAt')
+ManyToOne('User', 'createdGames')(UnoGame.prototype, 'creator')
+JoinColumn({ name: 'creatorId' })(UnoGame.prototype, 'creator')
+OneToMany('GamePlayer', 'game')(UnoGame.prototype, 'players')
+OneToMany('GameCard', 'game')(UnoGame.prototype, 'cards')
 
 module.exports = { UnoGame }

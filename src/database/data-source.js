@@ -7,7 +7,7 @@ const AppDataSource = new DataSource({
   type: 'mysql',
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT) || 3319,
-  username: process.env.DB_USERNAME || 'gameuser',
+  username: process.env.DB_USER || 'gameuser',
   password: process.env.DB_PASSWORD || 'gamepassword',
   database: process.env.DB_NAME || (env === 'test' ? 'game_management_test' : 'game_management'),
   synchronize: env !== 'production',

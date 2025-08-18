@@ -39,6 +39,7 @@
     "docker:start": "docker-compose up -d",
     "docker:stop": "docker-compose down",
     "docker:logs": "docker-compose logs mysql",
+    "clean-db": "node scripts/clean-database.js",
     "validate-env": "node scripts/validate-env.js",
     "lint": "eslint src/ tests/ --fix",
     "format": "prettier --write src/ tests/",
