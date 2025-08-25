@@ -1,93 +1,269 @@
-# CASTONE
+# Proyecto Capstone - UNO Game API
 
+## 📋 Descripción del Proyecto
 
+Este proyecto implementa una API completa para el juego UNO, desarrollada como parte del Proyecto Capstone. La implementación incluye todos los sistemas principales del juego, con especial énfasis en el **Sistema UNO Challenge (Requirement 5)** y el **Sistema UNO Call (Requirement 4)**.
 
-## Getting started
+## 🎯 Funcionalidades Principales
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+### ✅ Sistemas Implementados
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+1. **Sistema de Autenticación** - Registro, login y gestión de usuarios
+2. **Sistema de Gestión de Juegos** - Crear, unirse, iniciar y finalizar juegos
+3. **Sistema de Distribución de Cartas** - Distribución automática de cartas (Requirement 1)
+4. **Sistema de Jugada de Cartas** - Lógica para jugar cartas (Requirement 2)
+5. **Sistema de Robo de Cartas** - Mecánica para robar cartas (Requirement 3)
+6. **Sistema UNO Call** - Llamar UNO cuando queda 1 carta (Requirement 4)
+7. **Sistema UNO Challenge** - Challengear jugadores que no llamaron UNO (Requirement 5)
 
-## Add your files
+### 🎮 Sistema UNO Challenge (Requirement 5) - IMPLEMENTADO
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+El sistema permite a los jugadores challengear a otros que tienen una carta pero no han llamado UNO:
+
+- **Validación de Challenges**: Verifica condiciones válidas para challenges
+- **Penalización**: Aplica 2 cartas de penalización si el challenge es exitoso
+- **Integración**: Se integra con el Sistema UNO Call para verificar el estado
+- **Historial**: Mantiene registro de todos los challenges realizados
+- **Funciones Recursivas**: Implementa procesamiento recursivo de múltiples challenges
+- **Generadores**: Utiliza generadores para monitoreo continuo de oportunidades
+
+## 🏗️ Arquitectura del Proyecto
+
+### Principios SOLID Implementados
+
+- **Single Responsibility**: Cada servicio tiene una responsabilidad específica
+- **Open/Closed**: Extensible mediante plugins y interfaces
+- **Liskov Substitution**: Implementación correcta de herencia
+- **Interface Segregation**: Interfaces específicas y cohesivas
+- **Dependency Inversion**: Inyección de dependencias implementada
+
+### Patrones de Diseño
+
+- **Result Monad**: Manejo consistente de errores
+- **Repository Pattern**: Abstracción de acceso a datos
+- **Service Layer**: Lógica de negocio encapsulada
+- **Plugin Architecture**: Sistema extensible de reglas
+
+## 📁 Estructura del Proyecto
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/juan-pavas-semetre-5/programing4/castone.git
-git branch -M main
-git push -uf origin main
+capstone/
+├── documents/
+│   ├── POSTMAN_TESTING_GUIDE.md
+│   └── collections/
+│       └── UNO_Challenge_System_Postman_Collection.json
+├── images/
+├── src/
+│   ├── controllers/
+│   │   └── UnoController.js
+│   ├── core/
+│   │   └── services/
+│   │       ├── UnoCallService.js
+│   │       └── UnoChallengeService.js
+│   ├── entities/
+│   │   └── GamePlayer.js
+│   ├── routes/
+│   │   └── unoRoutes.js
+│   ├── validation/
+│   │   └── unoSchemas.js
+│   ├── tests/
+│   │   ├── test-uno-call.js
+│   │   ├── test-uno-challenge.js
+│   │   ├── test-uno-challenge-simple.js
+│   │   └── test-uno-challenge-direct.js
+│   └── app.js
+├── tests/
+├── .env.example
+├── .gitignore
+├── package.json
+└── README.md
 ```
 
-## Integrate with your tools
+## 🚀 Instalación y Configuración
 
-- [ ] [Set up project integrations](https://gitlab.com/juan-pavas-semetre-5/programing4/castone/-/settings/integrations)
+### Prerrequisitos
 
-## Collaborate with your team
+- Node.js (v16 o superior)
+- MySQL (v8.0 o superior)
+- npm o yarn
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+### Instalación
 
-## Test and Deploy
+1. **Clonar el repositorio**
+```bash
+git clone <repository-url>
+cd capstone
+```
 
-Use the built-in continuous integration in GitLab.
+2. **Instalar dependencias**
+```bash
+npm install
+```
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+3. **Configurar variables de entorno**
+```bash
+cp .env.example .env
+# Editar .env con tus configuraciones
+```
 
-***
+4. **Configurar base de datos**
+```bash
+npm run setup:database
+```
 
-# Editing this README
+5. **Ejecutar migraciones**
+```bash
+npm run migrate
+```
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+6. **Iniciar el servidor**
+```bash
+npm start
+```
 
-## Suggestions for a good README
+## 🧪 Testing
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### Tests Automatizados
 
-## Name
-Choose a self-explaining name for your project.
+El proyecto incluye tests completos para el Sistema UNO Challenge:
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+```bash
+# Ejecutar todos los tests
+npm test
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+# Tests específicos del UNO Challenge System
+node src/tests/test-uno-challenge.js
+node src/tests/test-uno-challenge-simple.js
+node src/tests/test-uno-challenge-direct.js
+```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+### Testing con Postman
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+1. **Importar la colección**
+   - Archivo: `documents/collections/UNO_Challenge_System_Postman_Collection.json`
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+2. **Seguir la guía**
+   - Documento: `documents/POSTMAN_TESTING_GUIDE.md`
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+3. **Ejecutar secuencia de tests**
+   - 16 requests organizados en 6 categorías
+   - Variables automáticas configuradas
+   - Validación completa de todos los endpoints
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+## 📡 API Endpoints
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+### Sistema UNO Challenge (Requirement 5)
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+```http
+POST /api/uno/challenge
+Content-Type: application/json
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+{
+  "challenger": "Player1",
+  "challengedPlayer": "Player2"
+}
+```
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+**Respuestas:**
 
-## License
-For open source projects, say how it is licensed.
+- **Challenge Exitoso (200)**:
+```json
+{
+  "message": "Challenge successful. Player2 forgot to say UNO and draws 2 cards.",
+  "nextPlayer": "Player3"
+}
+```
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+- **Challenge Fallido (400)**:
+```json
+{
+  "message": "Challenge failed. Player2 said UNO on time."
+}
+```
+
+### Sistema UNO Call (Requirement 4)
+
+```http
+PATCH /api/uno/call
+Content-Type: application/json
+
+{
+  "player": "Player1",
+  "action": "Say UNO"
+}
+```
+
+## 🔧 Tecnologías Utilizadas
+
+- **Backend**: Node.js, Express.js
+- **Base de Datos**: MySQL, TypeORM
+- **Validación**: Joi
+- **Testing**: Jest, Postman
+- **Arquitectura**: Clean Architecture, SOLID Principles
+- **Patrones**: Repository, Service Layer, Result Monad
+
+## 📊 Cobertura de Funcionalidades
+
+- ✅ **Requirement 1**: Sistema de Distribución de Cartas
+- ✅ **Requirement 2**: Sistema de Jugada de Cartas  
+- ✅ **Requirement 3**: Sistema de Robo de Cartas
+- ✅ **Requirement 4**: Sistema UNO Call
+- ✅ **Requirement 5**: Sistema UNO Challenge
+
+## 🎯 Sistema UNO Challenge - Detalles Técnicos
+
+### Funcionalidades Principales
+
+1. **Procesamiento de Challenges**
+   - Validación de condiciones
+   - Verificación de estado UNO
+   - Aplicación de penalizaciones
+
+2. **Integración con UNO Call**
+   - Verificación automática de llamadas UNO
+   - Sincronización de estados
+   - Validación cruzada
+
+3. **Funciones Recursivas**
+   - Procesamiento de múltiples challenges
+   - Monitoreo recursivo de oportunidades
+   - Gestión de estados complejos
+
+4. **Generadores**
+   - Monitoreo continuo de oportunidades
+   - Yield de eventos de challenge
+   - Gestión eficiente de memoria
+
+### Casos de Uso Cubiertos
+
+- ✅ Challenge válido (jugador no llamó UNO)
+- ✅ Challenge inválido (jugador sí llamó UNO)
+- ✅ Auto-challenge (rechazado)
+- ✅ Validación de entrada
+- ✅ Manejo de errores
+- ✅ Integración con sistema de turnos
+
+## 📝 Documentación Adicional
+
+- **Guía de Testing**: `documents/POSTMAN_TESTING_GUIDE.md`
+- **Implementación SOLID**: `SOLID_PRINCIPLES_IMPLEMENTATION.md`
+- **Distribución de Cartas**: `CARD_DISTRIBUTION_IMPLEMENTATION.md`
+- **Guía de API**: `API-TESTING-GUIDE.md`
+
+## 👥 Contribución
+
+Este proyecto sigue las mejores prácticas de desarrollo:
+
+- Código limpio y bien documentado
+- Arquitectura escalable y mantenible
+- Testing completo y automatizado
+- Documentación exhaustiva
+
+## 📄 Licencia
+
+Proyecto académico - Universidad JALA
+
+---
+
+**Proyecto Capstone - Programación 4**  
+**Sistema UNO Challenge (Requirement 5) - COMPLETAMENTE IMPLEMENTADO** ✅

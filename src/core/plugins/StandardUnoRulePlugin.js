@@ -89,7 +89,7 @@ class StandardUnoRulePlugin extends GameRulePlugin {
   }
 
   // Helper methods
-  canPlayCard(card, topCard) {
+  canPlayCard(card, topCard, currentColor = null) {
     if (!topCard) return true
 
     const cardParts = card.split(' ')
@@ -98,8 +98,54 @@ class StandardUnoRulePlugin extends GameRulePlugin {
     // Wild cards can always be played
     if (cardParts[0] === 'Wild') return true
 
+    // If there's a current color set by a wild card, use that instead of top card color
+    const effectiveColor = currentColor || topCardParts[0]
+
     // Same color or same value/action
-    return cardParts[0] === topCardParts[0] || cardParts[1] === topCardParts[1]
+    return cardParts[0] === effectiveColor || cardParts[1] === topCardParts[1]
+  }
+
+  /**
+   * Gets all valid cards that can be played from a player's hand
+   * @param {Array<string>} playerHand - Array of card names in player's hand
+   * @param {string} topCard - Current top card on discard pile
+   * @param {string} currentColor - Current color if set by wild card
+   * @returns {Array<string>} - Array of playable cards
+   */
+  getValidCards(playerHand, topCard, currentColor = null) {
+    if (!Array.isArray(playerHand)) return []
+
+    return playerHand.filter(card => this.canPlayCard(card, topCard, currentColor))
+  }
+
+  /**
+   * Checks if a specific card can be played against the top card
+   * @param {string} cardToPlay - Card to validate
+   * @param {string} topCard - Current top card
+   * @param {string} currentColor - Current color if set by wild card
+   * @returns {boolean} - True if card can be played
+   */
+  canPlayCardStrict(cardToPlay, topCard, currentColor = null) {
+    return this.canPlayCard(cardToPlay, topCard, currentColor)
+  }
+
+  /**
+   * Applies the effect of a played card to the game state
+   * @param {string} cardPlayed - The card that was played
+   * @param {Object} gameState - Current game state
+   * @param {string} targetColor - Color chosen for wild cards
+   * @returns {Object} - Updated game state
+   */
+  applyCardEffect(cardPlayed, gameState, targetColor = null) {
+    const newGameState = { ...gameState }
+
+    if (this.isActionCard(cardPlayed)) {
+      return this.processActionCard(cardPlayed, { targetColor }, newGameState)
+    }
+
+    // For regular cards, just move to next player
+    newGameState.currentPlayer = this.getNextPlayer(newGameState)
+    return newGameState
   }
 
   isActionCard(card) {

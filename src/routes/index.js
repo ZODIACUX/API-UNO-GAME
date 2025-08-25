@@ -30,12 +30,18 @@ try {
   const gamePlayerRoutes = require('./gamePlayerRoutes')
   console.log('✓ gamePlayerRoutes loaded')
 
+  const unoRoutes = require('./unoRoutes')
+  console.log('✓ unoRoutes loaded')
+
   // Configure additional routes
   router.use('/participants', gameParticipantRoutes)
   router.use('/scores', gameScoreRoutes)
   router.use('/cards', cardRoutes)
   router.use('/uno-games', unoGameRoutes)
   router.use('/game-players', gamePlayerRoutes)
+
+  // Configure UNO API routes (main game endpoints)
+  router.use('/', unoRoutes)
   console.log('✓ All route modules configured successfully')
 } catch (error) {
   console.log('✗ Some routes failed to load:', error.message)
