@@ -1,0 +1,414 @@
+{
+	"info": {
+		"_postman_id": "verified-uno-api-2025",
+		"name": "UNO Game API - VERIFIED WORKING ONLY",
+		"description": "Solo las rutas 100% verificadas como funcionales",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "✅ VERIFIED WORKING",
+			"item": [
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has status OK', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.status).to.eql('OK');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["health"]
+						},
+						"description": "✅ FUNCIONA - Verifica que el servidor esté funcionando"
+					}
+				},
+				{
+					"name": "API Root Info",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has available endpoints', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('availableEndpoints');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}",
+							"host": ["{{apiUrl}}"]
+						},
+						"description": "✅ FUNCIONA - Obtiene información sobre endpoints disponibles"
+					}
+				},
+				{
+					"name": "Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response has success message', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.message).to.include('successfully');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{username}}\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{apiUrl}}/auth/register",
+							"host": ["{{apiUrl}}"],
+							"path": ["auth", "register"]
+						},
+						"description": "✅ FUNCIONA - Registra un nuevo usuario"
+					}
+				},
+				{
+					"name": "Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has access token', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('access_token');",
+									"    pm.collectionVariables.set('accessToken', responseJson.access_token);",
+									"    console.log('✅ Token guardado correctamente');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{apiUrl}}/auth/login",
+							"host": ["{{apiUrl}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "✅ FUNCIONA - Inicia sesión y obtiene token JWT"
+					}
+				},
+				{
+					"name": "Get Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has user data', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('username');",
+									"    pm.expect(responseJson).to.have.property('email');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{apiUrl}}/auth/profile",
+							"host": ["{{apiUrl}}"],
+							"path": ["auth", "profile"]
+						},
+						"description": "✅ FUNCIONA - Obtiene perfil del usuario autenticado"
+					}
+				},
+				{
+					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has success message', function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.message).to.include('successfully');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{apiUrl}}/auth/logout",
+							"host": ["{{apiUrl}}"],
+							"path": ["auth", "logout"]
+						},
+						"description": "✅ FUNCIONA - Cierra sesión"
+					}
+				}
+			]
+		},
+		{
+			"name": "❌ KNOWN ISSUES",
+			"item": [
+				{
+					"name": "❌ Join Game (Controller Issue)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{apiUrl}}/participants/games/1/join",
+							"host": ["{{apiUrl}}"],
+							"path": ["participants", "games", "1", "join"]
+						},
+						"description": "❌ FALLA - Controller export issue"
+					}
+				},
+				{
+					"name": "❌ Get Cards (Auth Issue)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{apiUrl}}/cards",
+							"host": ["{{apiUrl}}"],
+							"path": ["cards"]
+						},
+						"description": "❌ FALLA - Possible controller or service issue"
+					}
+				},
+				{
+					"name": "❌ Wrong Register URL",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"test\",\n  \"email\": \"test@test.com\",\n  \"password\": \"test123\"\n}"
+						},
+						"url": {
+							"raw": "{{apiUrl}}/register",
+							"host": ["{{apiUrl}}"],
+							"path": ["register"]
+						},
+						"description": "❌ FALLA - URL incorrecta (debería ser /auth/register)"
+					}
+				}
+			]
+		},
+		{
+			"name": "🔧 TESTING UTILITIES",
+			"item": [
+				{
+					"name": "Test All Working Endpoints",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Este script ejecuta todos los endpoints verificados",
+									"console.log('🧪 Iniciando test completo de endpoints verificados...');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["health"]
+						},
+						"description": "Ejecuta este endpoint para verificar que todo funciona"
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Verificar configuración",
+					"console.log('🔍 Base URL:', pm.collectionVariables.get('baseUrl'));",
+					"console.log('🔍 API URL:', pm.collectionVariables.get('apiUrl'));",
+					"",
+					"// Verificar token si es necesario",
+					"if (pm.request.headers && pm.request.headers.get('Authorization')) {",
+					"    const token = pm.collectionVariables.get('accessToken');",
+					"    if (!token) {",
+					"        console.log('⚠️ Token no configurado. Ejecuta Login primero.');",
+					"    }",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Log para todas las respuestas",
+					"const status = pm.response.status;",
+					"const time = pm.response.responseTime;",
+					"const name = pm.info.requestName;",
+					"",
+					"if (status >= 200 && status < 300) {",
+					"    console.log(`✅ ${name}: ${status} (${time}ms)`);",
+					"} else if (status >= 400) {",
+					"    console.log(`❌ ${name}: ${status} (${time}ms)`);",
+					"    try {",
+					"        const body = pm.response.json();",
+					"        if (body.message) {",
+					"            console.log('   Error:', body.message);",
+					"        }",
+					"    } catch (e) {",
+					"        console.log('   Error parsing response');",
+					"    }",
+					"} else {",
+					"    console.log(`ℹ️ ${name}: ${status} (${time}ms)`);",
+					"}",
+					"",
+					"// Test global de tiempo de respuesta",
+					"pm.test('Response time under 5s', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "apiUrl",
+			"value": "http://localhost:3000/api",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "username",
+			"value": "verified2025",
+			"type": "string"
+		},
+		{
+			"key": "email",
+			"value": "verified2025@example.com",
+			"type": "string"
+		},
+		{
+			"key": "password",
+			"value": "password123",
+			"type": "string"
+		}
+	]
+}

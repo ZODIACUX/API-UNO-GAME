@@ -511,6 +511,306 @@ class UnoController {
     }
   }
 
+  // 15. Distribuir cartas (NUEVO - Requirement 1)
+  dealCards = async (req, res) => {
+    try {
+      const { players, cardsPerPlayer = 7 } = req.body
+
+      // Import CardDistributionService - we'll need to set up DI for this
+      const CardDistributionService = require('../core/services/CardDistributionService')
+      
+      // For now, create service directly - in production should use DI container
+      const cardDistributionService = new CardDistributionService(
+        null, // gameRepository - not needed for basic distribution
+        null, // gamePlayerRepository
+        null, // gameCardRepository
+        null  // cardRepository
+      )
+
+      const result = await cardDistributionService.distributeCards(players, cardsPerPlayer)
+
+      if (!result.isSuccess) {
+        return res.status(400).json({
+          error: result.error
+        })
+      }
+
+      // Return the exact format specified in requirements
+      res.json(result.value)
+
+    } catch (error) {
+      console.error('Deal cards error:', error)
+      res.status(500).json({
+        error: 'Internal server error'
+      })
+    }
+  }
+
+  // 16. Jugar carta (NUEVO - Requirement 2)
+  playCard = async (req, res) => {
+    try {
+      const { player, cardPlayed, targetColor } = req.body
+
+      // Import services - in production should use DI container
+      const CardPlayService = require('../core/services/CardPlayService')
+      const StandardUnoRulePlugin = require('../core/plugins/StandardUnoRulePlugin')
+      const GameRepository = require('../repositories/GameRepository')
+      const { AppDataSource } = require('../database/data-source')
+      const { GamePlayer } = require('../entities/GamePlayer')
+      const { GameCard } = require('../entities/GameCard')
+
+      // Create repositories
+      const gamePlayerRepository = AppDataSource.getRepository(GamePlayer)
+      const gameCardRepository = AppDataSource.getRepository(GameCard)
+
+      // Create rule plugin
+      const rulePlugin = new StandardUnoRulePlugin()
+
+      // Create service
+      const cardPlayService = new CardPlayService(
+        GameRepository,
+        gamePlayerRepository,
+        gameCardRepository,
+        rulePlugin
+      )
+
+      // Find active game for the user
+      const activeGameResult = await GameRepository.findBy({
+        status: 'in_progress'
+      })
+
+      if (!activeGameResult.isSuccess || activeGameResult.value.length === 0) {
+        return res.status(404).json({
+          message: 'No active game found'
+        })
+      }
+
+      // For now, use the first active game - in production you'd specify game_id
+      const gameId = activeGameResult.value[0].id
+
+      // Play the card
+      const result = await cardPlayService.playCard(gameId, player, cardPlayed, targetColor)
+
+      if (!result.isSuccess) {
+        return res.status(400).json({
+          message: result.error
+        })
+      }
+
+      // Return success response
+      res.json(result.value)
+
+    } catch (error) {
+      console.error('Play card error:', error)
+      res.status(500).json({
+        message: 'Internal server error'
+      })
+    }
+  }
+
+  // 17. Dibujar carta (NUEVO - Requirement 3)
+  drawCard = async (req, res) => {
+    try {
+      const { player } = req.body
+
+      // Import services - in production should use DI container
+      const CardDrawService = require('../core/services/CardDrawService')
+      const StandardUnoRulePlugin = require('../core/plugins/StandardUnoRulePlugin')
+      const GameRepository = require('../repositories/GameRepository')
+      const { AppDataSource } = require('../database/data-source')
+      const { GamePlayer } = require('../entities/GamePlayer')
+      const { GameCard } = require('../entities/GameCard')
+      const { Card } = require('../entities/Card')
+
+      // Create repositories
+      const gamePlayerRepository = AppDataSource.getRepository(GamePlayer)
+      const gameCardRepository = AppDataSource.getRepository(GameCard)
+      const cardRepository = AppDataSource.getRepository(Card)
+
+      // Create rule plugin
+      const rulePlugin = new StandardUnoRulePlugin()
+
+      // Create service
+      const cardDrawService = new CardDrawService(
+        GameRepository,
+        gamePlayerRepository,
+        gameCardRepository,
+        cardRepository,
+        rulePlugin
+      )
+
+      // Find active game for the user
+      const activeGameResult = await GameRepository.findBy({
+        status: 'in_progress'
+      })
+
+      if (!activeGameResult.isSuccess || activeGameResult.value.length === 0) {
+        return res.status(404).json({
+          message: 'No active game found'
+        })
+      }
+
+      // For now, use the first active game - in production you'd specify game_id
+      const gameId = activeGameResult.value[0].id
+
+      // Draw the card
+      const result = await cardDrawService.drawCard(gameId, player)
+
+      if (!result.isSuccess) {
+        return res.status(400).json({
+          message: result.error
+        })
+      }
+
+      // Return success response
+      res.json(result.value)
+
+    } catch (error) {
+      console.error('Draw card error:', error)
+      res.status(500).json({
+        message: 'Internal server error'
+      })
+    }
+  }
+
+  // 18. Llamar UNO (NUEVO - Requirement 4)
+  callUno = async (req, res) => {
+    try {
+      const { player, action } = req.body
+
+      // Import services - in production should use DI container
+      const UnoCallService = require('../core/services/UnoCallService')
+      const GameRepository = require('../repositories/GameRepository')
+      const { AppDataSource } = require('../database/data-source')
+      const { GamePlayer } = require('../entities/GamePlayer')
+      const { GameCard } = require('../entities/GameCard')
+
+      // Create repositories
+      const gamePlayerRepository = AppDataSource.getRepository(GamePlayer)
+      const gameCardRepository = AppDataSource.getRepository(GameCard)
+
+      // Create service
+      const unoCallService = new UnoCallService(
+        GameRepository,
+        gamePlayerRepository,
+        gameCardRepository
+      )
+
+      // Find active game for the user
+      const activeGameResult = await GameRepository.findGamesByStatus('in_progress')
+
+      if (!activeGameResult.isSuccess || activeGameResult.value.length === 0) {
+        return res.status(404).json({
+          message: 'No active game found'
+        })
+      }
+
+      // For now, use the first active game - in production you'd specify game_id
+      const gameId = activeGameResult.value[0].id
+
+      // Validate action
+      if (action !== 'Say UNO') {
+        return res.status(400).json({
+          message: 'Invalid action. Must be "Say UNO"'
+        })
+      }
+
+      // Call UNO
+      const result = await unoCallService.callUno(gameId, player)
+
+      if (!result.isSuccess) {
+        return res.status(400).json({
+          message: result.error
+        })
+      }
+
+      // Return success response
+      res.json(result.value)
+
+    } catch (error) {
+      console.error('Call UNO error:', error)
+      res.status(500).json({
+        message: 'Internal server error'
+      })
+    }
+  }
+
+  // 19. Desafiar UNO (NUEVO - Requirement 5)
+  challengeUno = async (req, res) => {
+    try {
+      const { challenger, challengedPlayer } = req.body
+
+      // Import services - in production should use DI container
+      const UnoChallengeService = require('../core/services/UnoChallengeService')
+      const UnoCallService = require('../core/services/UnoCallService')
+      const GameRepository = require('../repositories/GameRepository')
+      const { AppDataSource } = require('../database/data-source')
+      const { GamePlayer } = require('../entities/GamePlayer')
+      const { GameCard } = require('../entities/GameCard')
+      const { Card } = require('../entities/Card')
+
+      // Create repositories
+      const gamePlayerRepository = AppDataSource.getRepository(GamePlayer)
+      const gameCardRepository = AppDataSource.getRepository(GameCard)
+      const cardRepository = AppDataSource.getRepository(Card)
+
+      // Create UnoCallService first
+      const unoCallService = new UnoCallService(
+        GameRepository,
+        gamePlayerRepository,
+        gameCardRepository
+      )
+
+      // Create UnoChallengeService
+      const unoChallengeService = new UnoChallengeService(
+        GameRepository,
+        gamePlayerRepository,
+        gameCardRepository,
+        cardRepository,
+        unoCallService
+      )
+
+      // Find active game for the players
+      const activeGameResult = await GameRepository.findGamesByStatus('in_progress')
+
+      if (!activeGameResult.isSuccess || activeGameResult.value.length === 0) {
+        return res.status(404).json({
+          message: 'No active game found'
+        })
+      }
+
+      // For now, use the first active game - in production you'd specify game_id
+      const gameId = activeGameResult.value[0].id
+
+      // Process the challenge
+      const result = await unoChallengeService.processChallenge(gameId, challenger, challengedPlayer)
+
+      if (!result.isSuccess) {
+        return res.status(400).json({
+          message: result.error
+        })
+      }
+
+      // Return appropriate response based on challenge outcome
+      if (result.value.challengeSuccessful) {
+        res.json({
+          message: result.value.message,
+          nextPlayer: result.value.nextPlayer
+        })
+      } else {
+        res.status(400).json({
+          message: result.value.message
+        })
+      }
+
+    } catch (error) {
+      console.error('Challenge UNO error:', error)
+      res.status(500).json({
+        message: 'Internal server error'
+      })
+    }
+  }
+
   // Método auxiliar para generar baraja UNO
   generateDeck() {
     const colors = ['Red', 'Blue', 'Green', 'Yellow']

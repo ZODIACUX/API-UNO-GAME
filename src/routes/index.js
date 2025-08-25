@@ -30,23 +30,28 @@ try {
   const gamePlayerRoutes = require('./gamePlayerRoutes')
   console.log('✓ gamePlayerRoutes loaded')
 
-  // Configurar rutas funcionales
+  const unoRoutes = require('./unoRoutes')
+  console.log('✓ unoRoutes loaded')
+
+  // Configure additional routes
   router.use('/participants', gameParticipantRoutes)
   router.use('/scores', gameScoreRoutes)
   router.use('/cards', cardRoutes)
   router.use('/uno-games', unoGameRoutes)
   router.use('/game-players', gamePlayerRoutes)
 
+  // Configure UNO API routes (main game endpoints)
+  router.use('/', unoRoutes)
   console.log('✓ All route modules configured successfully')
 } catch (error) {
   console.log('✗ Some routes failed to load:', error.message)
   console.log('Route loading error stack:', error.stack)
 }
 
-// Rutas básicas de prueba
+// API root endpoint
 router.get('/', (req, res) => {
   res.json({
-    message: 'UNO Game API - Functional Routes',
+    message: 'UNO Game API - Complete Routes',
     availableEndpoints: [
       'POST /api/auth/register',
       'POST /api/auth/login',
@@ -61,4 +66,5 @@ router.get('/', (req, res) => {
   })
 })
 
+console.log('🚀 All API routes configured')
 module.exports = router
