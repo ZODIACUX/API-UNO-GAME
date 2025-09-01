@@ -1,42 +1,74 @@
-const gameScoreRepository = require('../repositories/gameScoreRepository')
-const { ApiError } = require('../utils-api/responseHelper')
+const { AppDataSource } = require('../config/data-source')
+const { GameScore } = require('../models/GameScore')
 
 class GameScoreService {
+  constructor() {
+    this.gameScoreRepository = AppDataSource.getRepository(GameScore)
+  }
+
   async createScore(scoreData) {
-    const existingScore = await gameScoreRepository.findByGameAndParticipant(
-      scoreData.gameId,
-      scoreData.participantId
-    )
+    const existingScore = await this.gameScoreRepository.findOne({
+      where: {
+        gameId: scoreData.gameId,
+        participantId: scoreData.participantId
+      }
+    })
     if (existingScore) {
-      throw new ApiError('Score already exists for this participant in this game', 400)
+      throw new Error('Score already exists for this participant in this game')
     }
 
-    return await gameScoreRepository.create(scoreData)
+    const score = this.gameScoreRepository.create(scoreData)
+    return await this.gameScoreRepository.save(score)
   }
 
   async updateScore(id, scoreData) {
-    const score = await gameScoreRepository.findById(id)
+    const score = await this.gameScoreRepository.findOne({
+      where: { id },
+      relations: ['participant', 'game']
+    })
     if (!score) {
-      throw new ApiError('Score not found', 404)
+      throw new Error('Score not found')
     }
 
-    return await gameScoreRepository.update(id, scoreData)
+    await this.gameScoreRepository.update(id, scoreData)
+    return await this.gameScoreRepository.findOne({
+      where: { id },
+      relations: ['participant', 'game']
+    })
   }
 
   async getGameScores(gameId) {
-    return await gameScoreRepository.findByGame(gameId)
+    return await this.gameScoreRepository.find({
+      where: { gameId },
+      relations: ['participant', 'game'],
+      order: {
+        points: 'DESC'
+      }
+    })
   }
 
   async getParticipantScores(participantId) {
-    const scores = await gameScoreRepository.getParticipantScores(participantId)
+    const scores = await this.gameScoreRepository.find({
+      where: { participantId },
+      relations: ['game'],
+      order: {
+        createdAt: 'DESC'
+      }
+    })
     if (!scores.length) {
-      throw new ApiError('No scores found for this participant', 404)
+      throw new Error('No scores found for this participant')
     }
     return scores
   }
 
-  async getHighScores(limit) {
-    return await gameScoreRepository.getHighScores(limit)
+  async getHighScores(limit = 10) {
+    return await this.gameScoreRepository.find({
+      relations: ['participant', 'participant.user', 'game'],
+      order: {
+        points: 'DESC'
+      },
+      take: limit
+    })
   }
 
   async calculateFinalScores(gameId, participants) {
@@ -48,7 +80,13 @@ class GameScoreService {
       createdAt: new Date()
     }))
 
-    return Promise.all(scores.map(score => this.createScore(score)))
+    const createdScores = []
+    for (const scoreData of scores) {
+      const score = await this.createScore(scoreData)
+      createdScores.push(score)
+    }
+
+    return createdScores
   }
 }
 

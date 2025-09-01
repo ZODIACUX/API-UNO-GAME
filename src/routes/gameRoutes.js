@@ -1,13 +1,13 @@
 const express = require('express')
 const router = express.Router()
 const gameController = require('../controllers/GameController')
-const { authenticateToken } = require('../middleware/auth')
+const { authenticateToken } = require('../middlewares/auth')
 const {
   createGameSchema,
   joinGameSchema,
   gameActionSchema,
   validateRequest
-} = require('../validation/gameValidation')
+} = require('../middlewares/gameValidation')
 
 router.post('/create', authenticateToken, validateRequest(createGameSchema), gameController.createGame)
 router.post('/join', authenticateToken, validateRequest(joinGameSchema), gameController.joinGame)

@@ -1,8 +1,8 @@
 {
-  "name": "uno-game-api",
+  "name": "capstone",
   "version": "1.0.0",
-  "description": "API para juego de cartas UNO",
-  "main": "index.js",
+  "description": "Capstone - API para juego de cartas UNO",
+  "main": "src/server.js",
   "scripts": {
     "start": "node -r @babel/register index.js",
     "dev": "nodemon -r @babel/register index.js",
@@ -33,9 +33,6 @@
     "seed:test": "NODE_ENV=test ts-node src/database/seeds/seed.js",
     "test-db": "node scripts/test-connection.js",
     "test-db-docker": "node scripts/docker-mysql-test.js",
-    "setup-db": "node scripts/database-setup.js",
-    "setup-test-db": "cross-env NODE_ENV=test node scripts/database-setup.js",
-    "reset-test-db": "npm run schema:drop && npm run setup-test-db",
     "docker:start": "docker-compose up -d",
     "docker:stop": "docker-compose down",
     "docker:logs": "docker-compose logs mysql",
@@ -94,13 +91,13 @@
   "jest": {
     "testEnvironment": "node",
     "setupFilesAfterEnv": [
-      "<rootDir>/tests/setup.js"
+      "<rootDir>/src/tests/setup.js"
     ],
     "transform": {
       "^.+\\.(js|jsx)$": "babel-jest"
     },
     "testMatch": [
-      "<rootDir>/tests/**/*.test.js"
+      "<rootDir>/src/tests/**/*.test.js"
     ],
     "testPathIgnorePatterns": [
       "/node_modules/",
@@ -173,16 +170,16 @@
     "authentication",
     "jwt"
   ],
-  "author": "JALAU Team <team@jalau.com>",
+  "author": "Juan Pavas <juan.pavas@jala.university>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jalau/uno-game-api.git"
+    "url": "git+https://gitlab.com/juan-pavas-semetre-5/programing4/capstone.git"
   },
   "bugs": {
-    "url": "https://github.com/jalau/uno-game-api/issues"
+    "url": "https://gitlab.com/juan-pavas-semetre-5/programing4/capstone/-/issues"
   },
-  "homepage": "https://github.com/jalau/uno-game-api#readme",
+  "homepage": "https://gitlab.com/juan-pavas-semetre-5/programing4/capstone#readme",
   "nodemonConfig": {
     "watch": [
       "src/",

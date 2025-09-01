@@ -1,14 +1,14 @@
 const express = require('express')
 const router = express.Router()
 const cardController = require('../controllers/cardController')
-const { authenticateToken } = require('../middleware/auth')
+const { authenticateToken } = require('../middlewares/auth')
 const {
   validateCard,
   validateCards,
   validateCardParams,
   validateCardType,
   validateCardColor
-} = require('../validation/cardValidation')
+} = require('../middlewares/cardValidation')
 
 // Middleware de autenticación para todas las rutas
 router.use(authenticateToken)

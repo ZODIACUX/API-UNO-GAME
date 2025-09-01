@@ -33,12 +33,17 @@ try {
   const unoRoutes = require('./unoRoutes')
   console.log('✓ unoRoutes loaded')
 
+<<<<<<< Updated upstream
   // Configure additional routes
+=======
+  // Configurar rutas funcionales
+>>>>>>> Stashed changes
   router.use('/participants', gameParticipantRoutes)
   router.use('/scores', gameScoreRoutes)
   router.use('/cards', cardRoutes)
   router.use('/uno-games', unoGameRoutes)
   router.use('/game-players', gamePlayerRoutes)
+  router.use('/', unoRoutes)
 
   // Configure UNO API routes (main game endpoints)
   router.use('/', unoRoutes)

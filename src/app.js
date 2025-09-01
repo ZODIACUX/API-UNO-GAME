@@ -3,9 +3,7 @@ const express = require('express')
 const cors = require('cors')
 const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
-const ServiceRegistration = require('./core/di/ServiceRegistration')
-
-ServiceRegistration.register()
+// Removed complex dependency injection system for simplified architecture
 
 const app = express()
 
@@ -33,7 +31,7 @@ app.get('/health', (req, res) => {
 })
 
 // Middleware de manejo de errores
-const ErrorHandler = require('./core/middleware/ErrorHandler')
+const ErrorHandler = require('./middlewares/ErrorHandler')
 
 // Middleware para rutas no encontradas
 app.use('*', ErrorHandler.notFound)

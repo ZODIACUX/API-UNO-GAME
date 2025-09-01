@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: UNO-GAME
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: game_management
+      MYSQL_USER: gameuser
+      MYSQL_PASSWORD: gamepassword
+    ports:
+      - "3319:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+
+  app:
+    build: .
+    container_name: uno-api
+    depends_on:
+      - mysql
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=gameuser
+      - DB_PASSWORD=gamepassword
+      - DB_NAME=game_management
+      - JWT_SECRET=your_super_secret_jwt_key
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+
+volumes:
+  mysql_data:

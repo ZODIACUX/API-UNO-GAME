@@ -16,7 +16,9 @@ services:
     restart: unless-stopped
 
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
     container_name: uno-api
     depends_on:
       - mysql

@@ -1,11 +1,32 @@
-const BaseController = require('../core/controllers/BaseController')
-const ServiceRegistration = require('../core/di/ServiceRegistration')
-const Result = require('../core/errors/Result')
+const Result = require('../utils/Result')
+const CardService = require('../services/cardService')
 
-class CardController extends BaseController {
+class CardController {
   constructor() {
-    super()
-    this.cardService = ServiceRegistration.getService('cardService')
+    this.cardService = new CardService()
+  }
+
+  validateRequired(fields, data) {
+    const missing = fields.filter(field => !data[field])
+    if (missing.length > 0) {
+      return Result.failure(new Error(`Missing required fields: ${missing.join(', ')}`))
+    }
+    return Result.success(data)
+  }
+
+  async executeAction(action, res, successStatus = 200) {
+    try {
+      const result = await action()
+      if (result.isSuccess) {
+        return res.status(successStatus).json(result.value)
+      } else {
+        const statusCode = result.error.message.includes('not found') ? 404 : 400
+        return res.status(statusCode).json({ error: result.error.message })
+      }
+    } catch (error) {
+      console.error('Controller error:', error)
+      return res.status(500).json({ error: 'Internal server error' })
+    }
   }
 
   getCard = async (req, res) => {
@@ -15,7 +36,7 @@ class CardController extends BaseController {
         return Result.failure(new Error('Card ID is required'))
       }
 
-      return await this.cardService.getById(id)
+      return await this.cardService.getCardById(id)
     }, res)
   }
 
@@ -43,7 +64,7 @@ class CardController extends BaseController {
 
   getAllCards = async (req, res) => {
     await this.executeAction(async () => {
-      return await this.cardService.getAll()
+      return await this.cardService.getAllCards()
     }, res)
   }
 
@@ -54,7 +75,7 @@ class CardController extends BaseController {
         return validationResult
       }
 
-      return await this.cardService.create(req.body)
+      return await this.cardService.createCard(req.body)
     }, res, 201)
   }
 

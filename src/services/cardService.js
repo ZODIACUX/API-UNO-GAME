@@ -1,13 +1,36 @@
-const BaseService = require('../core/services/BaseService')
-const Result = require('../core/errors/Result')
+const { AppDataSource } = require('../config/data-source')
+const { Card } = require('../models/Card')
+const { IsNull } = require('typeorm')
+const Result = require('../utils/Result')
 
-class CardService extends BaseService {
-  constructor(cardRepository) {
-    super(cardRepository)
+class CardService {
+  constructor() {
+    this.cardRepository = AppDataSource.getRepository(Card)
     this.validTypes = ['number', 'action', 'wild']
     this.validColors = ['red', 'blue', 'green', 'yellow', 'black']
     this.validValues = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
       'skip', 'reverse', 'draw_two', 'wild', 'wild_draw_four']
+  }
+
+  async getAllCards() {
+    return Result.fromAsync(async () => {
+      return await this.cardRepository.find()
+    })
+  }
+
+  async getCardById(id) {
+    return Result.fromAsync(async () => {
+      if (!id) {
+        throw new Error('Card ID is required')
+      }
+
+      const card = await this.cardRepository.findOne({ where: { id } })
+      if (!card) {
+        throw new Error('Card not found')
+      }
+
+      return card
+    })
   }
 
   async getCardsByType(type) {
@@ -16,12 +39,7 @@ class CardService extends BaseService {
         throw new Error('Invalid card type')
       }
 
-      const result = await this.repository.findByType(type)
-      if (!result.isSuccess) {
-        throw new Error('Failed to retrieve cards by type')
-      }
-
-      return result.value
+      return await this.cardRepository.find({ where: { type } })
     })
   }
 
@@ -31,12 +49,27 @@ class CardService extends BaseService {
         throw new Error('Invalid card color')
       }
 
-      const result = await this.repository.findByColor(color)
-      if (!result.isSuccess) {
-        throw new Error('Failed to retrieve cards by color')
+      return await this.cardRepository.find({ where: { color } })
+    })
+  }
+
+  async getCardsByValue(value) {
+    return Result.fromAsync(async () => {
+      return await this.cardRepository.find({
+        where: { value: value === null ? IsNull() : value }
+      })
+    })
+  }
+
+  async createCard(cardData) {
+    return Result.fromAsync(async () => {
+      const validationResult = this.validateData(cardData)
+      if (!validationResult.isSuccess) {
+        throw validationResult.error
       }
 
-      return result.value
+      const card = this.cardRepository.create(cardData)
+      return await this.cardRepository.save(card)
     })
   }
 
@@ -53,12 +86,26 @@ class CardService extends BaseService {
         }
       }
 
-      const result = await this.repository.createMany(cardsData)
-      if (!result.isSuccess) {
-        throw new Error('Failed to create cards')
+      const cards = this.cardRepository.create(cardsData)
+      return await this.cardRepository.save(cards)
+    })
+  }
+
+  async findCardsByTypeAndColor(type, color) {
+    return Result.fromAsync(async () => {
+      if (!type || !color) {
+        throw new Error('Both type and color parameters are required')
       }
 
-      return result.value
+      if (!this.validTypes.includes(type)) {
+        throw new Error('Invalid card type')
+      }
+
+      if (!this.validColors.includes(color)) {
+        throw new Error('Invalid card color')
+      }
+
+      return await this.cardRepository.find({ where: { type, color } })
     })
   }
 

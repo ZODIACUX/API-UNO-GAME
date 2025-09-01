@@ -1,38 +1,62 @@
-const BaseController = require('../core/controllers/BaseController')
-const ServiceRegistration = require('../core/di/ServiceRegistration')
-const Result = require('../core/errors/Result')
-const logger = require('../utils-api/logger')
+const Result = require('../utils/Result')
+const authService = require('../services/authService')
+const logger = require('../utils/logger')
 
-class AuthController extends BaseController {
-  constructor(authService = null) {
-    super()
+class AuthController {
+  constructor() {
     this.authService = authService
   }
 
-  getAuthService() {
-    if (!this.authService) {
-      this.authService = ServiceRegistration.getService('authService')
+  validateRequired(fields, data) {
+    const missing = fields.filter((field) => !data[field])
+    if (missing.length > 0) {
+      return Result.failure(new Error(`Missing required fields: ${missing.join(', ')}`))
     }
-    return this.authService
+    return Result.success(data)
+  }
+
+  async executeAction(action, res, successStatus = 200) {
+    try {
+      const result = await action()
+      if (result.isSuccess) {
+        return res.status(successStatus).json(result.value)
+      } else {
+        const statusCode = result.error.message.includes('not found')
+          ? 404
+          : result.error.message.includes('Invalid credentials')
+            ? 401
+            : result.error.message.includes('already exists')
+              ? 409
+              : 400
+        return res.status(statusCode).json({ error: result.error.message })
+      }
+    } catch (error) {
+      logger.error('Controller error:', error)
+      return res.status(500).json({ error: 'Internal server error' })
+    }
   }
 
   async register(req, res) {
-    await this.executeAction(async () => {
-      const validationResult = this.validateRequired(['username', 'email', 'password'], req.body)
-      if (!validationResult.isSuccess) {
-        return validationResult
-      }
+    await this.executeAction(
+      async () => {
+        const validationResult = this.validateRequired(['username', 'email', 'password'], req.body)
+        if (!validationResult.isSuccess) {
+          return validationResult
+        }
 
-      const result = await this.getAuthService().register(req.body)
+        const result = await this.authService.register(req.body)
 
-      if (result.isSuccess) {
-        logger.info('User registered successfully', { username: req.body.username })
-        return Result.success({ message: 'User registered successfully' })
-      }
+        if (result.isSuccess) {
+          logger.info('User registered successfully', { username: req.body.username })
+          return Result.success({ message: 'User registered successfully' })
+        }
 
-      logger.error('Register error', { error: result.error.message })
-      return result
-    }, res, 201)
+        logger.error('Register error', { error: result.error.message })
+        return result
+      },
+      res,
+      201
+    )
   }
 
   async login(req, res) {
@@ -43,7 +67,7 @@ class AuthController extends BaseController {
       }
 
       const { username, password } = req.body
-      const result = await this.getAuthService().login(username, password)
+      const result = await this.authService.login(username, password)
 
       if (result.isSuccess) {
         logger.info('User logged in successfully', { username })
@@ -68,13 +92,13 @@ class AuthController extends BaseController {
       if (!userId) {
         return Result.failure(new Error('User not authenticated'))
       }
-      const result = await this.getAuthService().getProfile(userId)
+      const result = await this.authService.getProfile(userId)
 
       if (result.isSuccess) {
         const user = result.value
         return Result.success({
           username: user.username,
-          email: user.email
+          email: user.email,
         })
       }
 
@@ -90,5 +114,5 @@ module.exports = {
   register: authController.register.bind(authController),
   login: authController.login.bind(authController),
   logout: authController.logout.bind(authController),
-  getProfile: authController.getProfile.bind(authController)
+  getProfile: authController.getProfile.bind(authController),
 }

@@ -1,8 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const gameScoreController = require('../controllers/gameScoreController')
-const { authenticateToken } = require('../middleware/auth')
-const { validateScoreData, validateScoreParams } = require('../validation/gameScoreValidation')
+const { authenticateToken } = require('../middlewares/auth')
+const { validateScoreData, validateScoreParams } = require('../middlewares/gameScoreValidation')
 
 router.post('/games/:gameId/scores', authenticateToken, validateScoreData, gameScoreController.createScore)
 router.put('/scores/:id', authenticateToken, validateScoreData, gameScoreController.updateScore)

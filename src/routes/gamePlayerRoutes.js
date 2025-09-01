@@ -1,8 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const gamePlayerController = require('../controllers/gamePlayerController')
-const { authenticateToken } = require('../middleware/auth')
-const { validateGameId, validateReadyStatus } = require('../validation/gameValidation')
+const { authenticateToken } = require('../middlewares/auth')
+const { validateGameId, validateReadyStatus } = require('../middlewares/gameValidation')
 
 // Middleware de autenticación para todas las rutas
 router.use(authenticateToken)
