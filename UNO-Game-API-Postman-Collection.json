@@ -1,0 +1,612 @@
+{
+  "info": {
+    "name": "UNO Game API - SOLID Architecture",
+    "description": "Complete API collection for UNO card game with SOLID principles implementation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Logout User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"access_token\": \"{{access_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Game Management",
+      "item": [
+        {
+          "name": "Create New Game",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My UNO Game\",\n  \"rules\": \"Standard UNO rules apply\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/games",
+              "host": ["{{base_url}}"],
+              "path": ["games"]
+            }
+          }
+        },
+        {
+          "name": "Join Game",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"game_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/games/:gameId/join",
+              "host": ["{{base_url}}"],
+              "path": ["games", ":gameId", "join"],
+              "variable": [
+                {
+                  "key": "gameId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Start Game",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"game_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/games/:gameId/start",
+              "host": ["{{base_url}}"],
+              "path": ["games", ":gameId", "start"],
+              "variable": [
+                {
+                  "key": "gameId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Leave Game",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"game_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/games/:gameId/leave",
+              "host": ["{{base_url}}"],
+              "path": ["games", ":gameId", "leave"],
+              "variable": [
+                {
+                  "key": "gameId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "End Game",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"game_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/games/:gameId/end",
+              "host": ["{{base_url}}"],
+              "path": ["games", ":gameId", "end"],
+              "variable": [
+                {
+                  "key": "gameId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Game State",
+      "item": [
+        {
+          "name": "Get Game State",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/games/:gameId/state",
+              "host": ["{{base_url}}"],
+              "path": ["games", ":gameId", "state"],
+              "variable": [
+                {
+                  "key": "gameId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Game Players",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/games/:gameId/players",
+              "host": ["{{base_url}}"],
+              "path": ["games", ":gameId", "players"],
+              "variable": [
+                {
+                  "key": "gameId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Current Player",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/games/:gameId/current-player",
+              "host": ["{{base_url}}"],
+              "path": ["games", ":gameId", "current-player"],
+              "variable": [
+                {
+                  "key": "gameId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Top Card",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/games/:gameId/top-card",
+              "host": ["{{base_url}}"],
+              "path": ["games", ":gameId", "top-card"],
+              "variable": [
+                {
+                  "key": "gameId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Game Scores",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/games/:gameId/scores",
+              "host": ["{{base_url}}"],
+              "path": ["games", ":gameId", "scores"],
+              "variable": [
+                {
+                  "key": "gameId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Game Actions",
+      "item": [
+        {
+          "name": "Next Turn",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"players\": [\"Alice\", \"Bob\", \"Charlie\", \"Diana\"],\n  \"currentPlayerIndex\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/games/next-turn",
+              "host": ["{{base_url}}"],
+              "path": ["games", "next-turn"]
+            }
+          }
+        },
+        {
+          "name": "Play Card",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cardPlayed\": \"Green 7\",\n  \"currentPlayerIndex\": 2,\n  \"players\": [\"Alice\", \"Bob\", \"Charlie\", \"Diana\"],\n  \"direction\": \"clockwise\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/games/:gameId/play-card",
+              "host": ["{{base_url}}"],
+              "path": ["games", ":gameId", "play-card"],
+              "variable": [
+                {
+                  "key": "gameId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Draw Card",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"playerHand\": [\"red_2\", \"blue_5\"],\n  \"deck\": [\"green_4\", \"yellow_skip\", \"red_9\"],\n  \"currentCard\": \"blue_7\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/games/:gameId/draw-card",
+              "host": ["{{base_url}}"],
+              "path": ["games", ":gameId", "draw-card"],
+              "variable": [
+                {
+                  "key": "gameId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Say UNO",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"player\": \"Player1\",\n  \"action\": \"Say UNO\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/games/:gameId/say-uno",
+              "host": ["{{base_url}}"],
+              "path": ["games", ":gameId", "say-uno"],
+              "variable": [
+                {
+                  "key": "gameId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Challenge UNO",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challenger\": \"Player2\",\n  \"challengedPlayer\": \"Player1\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/games/:gameId/challenge-uno",
+              "host": ["{{base_url}}"],
+              "path": ["games", ":gameId", "challenge-uno"],
+              "variable": [
+                {
+                  "key": "gameId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Advanced Game Features",
+      "item": [
+        {
+          "name": "Get Player Hand",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/games/:gameId/hand",
+              "host": ["{{base_url}}"],
+              "path": ["games", ":gameId", "hand"],
+              "variable": [
+                {
+                  "key": "gameId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Game History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/games/:gameId/history",
+              "host": ["{{base_url}}"],
+              "path": ["games", ":gameId", "history"],
+              "variable": [
+                {
+                  "key": "gameId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Game Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/games/:gameId/details",
+              "host": ["{{base_url}}"],
+              "path": ["games", ":gameId", "details"],
+              "variable": [
+                {
+                  "key": "gameId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
