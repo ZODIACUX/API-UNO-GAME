@@ -1,6 +1,6 @@
 /**
- * Maybe Monad for handling nullable values
- * Implements functional error handling patterns
+ * Maybe Monad - Represents a value that might be null or undefined
+ * Helps avoid null pointer exceptions and provides functional composition
  */
 class Maybe {
   constructor(value) {
@@ -11,12 +11,12 @@ class Maybe {
     return new Maybe(value)
   }
 
-  static none() {
-    return new Maybe(null)
-  }
-
   static some(value) {
     return new Maybe(value)
+  }
+
+  static none() {
+    return new Maybe(null)
   }
 
   static fromNullable(value) {
@@ -47,19 +47,19 @@ class Maybe {
     return this.isNone() ? defaultValue : this.value
   }
 
-  orElse(alternative) {
-    return this.isNone() ? alternative : this
+  getOrThrow(error = new Error('Maybe is None')) {
+    if (this.isNone()) {
+      throw error
+    }
+    return this.value
   }
 
   fold(onNone, onSome) {
     return this.isNone() ? onNone() : onSome(this.value)
   }
 
-  tap(fn) {
-    if (this.isSome()) {
-      fn(this.value)
-    }
-    return this
+  orElse(alternative) {
+    return this.isNone() ? alternative : this
   }
 
   toString() {

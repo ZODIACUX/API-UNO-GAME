@@ -1,11 +1,11 @@
 /**
- * Either Monad for handling success/failure scenarios
- * Implements functional error handling patterns
+ * Either Monad - Represents a value that can be either Left (error) or Right (success)
+ * Used for functional error handling and composition
  */
 class Either {
-  constructor(value, isLeftValue = false) {
+  constructor(value, isLeft = false) {
     this.value = value
-    this._isLeft = isLeftValue
+    this.isLeft = isLeft
   }
 
   static left(value) {
@@ -20,19 +20,16 @@ class Either {
     return Either.right(value)
   }
 
-  static fromNullable(value, leftValue = 'Value is null or undefined') {
-    return value == null ? Either.left(leftValue) : Either.right(value)
-  }
-
-  static tryCatch(fn, errorHandler = (e) => e.message) {
+  static tryCatch(fn, errorHandler = (e) => e) {
     try {
-      return Either.right(fn())
+      const result = fn()
+      return Either.right(result)
     } catch (error) {
       return Either.left(errorHandler(error))
     }
   }
 
-  static async tryCatchAsync(fn, errorHandler = (e) => e.message) {
+  static async tryCatchAsync(fn, errorHandler = (e) => e) {
     try {
       const result = await fn()
       return Either.right(result)
@@ -41,101 +38,52 @@ class Either {
     }
   }
 
-  isLeft() {
-    return this._isLeft
-  }
-
-  isRight() {
-    return !this._isLeft
+  get isRight() {
+    return !this.isLeft
   }
 
   map(fn) {
-    return this._isLeft ? this : Either.right(fn(this.value))
+    return this.isLeft ? this : Either.right(fn(this.value))
   }
 
   mapLeft(fn) {
-    return this._isLeft ? Either.left(fn(this.value)) : this
+    return this.isLeft ? Either.left(fn(this.value)) : this
   }
 
   flatMap(fn) {
-    return this._isLeft ? this : fn(this.value)
+    return this.isLeft ? this : fn(this.value)
   }
 
   fold(leftFn, rightFn) {
-    return this._isLeft ? leftFn(this.value) : rightFn(this.value)
+    return this.isLeft ? leftFn(this.value) : rightFn(this.value)
   }
 
   getOrElse(defaultValue) {
-    return this._isLeft ? defaultValue : this.value
+    return this.isLeft ? defaultValue : this.value
   }
 
-  orElse(alternative) {
-    return this._isLeft ? alternative : this
-  }
-
-  filter(predicate, leftValue = 'Filter condition not met') {
-    if (this._isLeft) return this
-    return predicate(this.value) ? this : Either.left(leftValue)
-  }
-
-  tap(fn) {
-    if (this.isRight()) {
-      fn(this.value)
+  getOrThrow() {
+    if (this.isLeft) {
+      throw this.value
     }
-    return this
-  }
-
-  tapLeft(fn) {
-    if (this.isLeft()) {
-      fn(this.value)
-    }
-    return this
-  }
-
-  bimap(leftFn, rightFn) {
-    return this._isLeft ? Either.left(leftFn(this.value)) : Either.right(rightFn(this.value))
+    return this.value
   }
 
   swap() {
-    return this._isLeft ? Either.right(this.value) : Either.left(this.value)
+    return new Either(this.value, !this.isLeft)
+  }
+
+  filter(predicate, errorValue = 'Filter predicate failed') {
+    if (this.isLeft) return this
+    return predicate(this.value) ? this : Either.left(errorValue)
+  }
+
+  orElse(alternative) {
+    return this.isLeft ? alternative : this
   }
 
   toString() {
-    return this._isLeft ? `Either.Left(${this.value})` : `Either.Right(${this.value})`
-  }
-
-  // Compatibility with existing Result class
-  get isSuccess() {
-    return this.isRight()
-  }
-
-  get error() {
-    return this._isLeft ? this.value : null
-  }
-
-  // Chain multiple Either operations
-  static sequence(eithers) {
-    const results = []
-    for (const either of eithers) {
-      if (either.isLeft()) {
-        return either
-      }
-      results.push(either.value)
-    }
-    return Either.right(results)
-  }
-
-  // Apply a function that returns Either to each element
-  static traverse(array, fn) {
-    const results = []
-    for (const item of array) {
-      const result = fn(item)
-      if (result.isLeft()) {
-        return result
-      }
-      results.push(result.value)
-    }
-    return Either.right(results)
+    return this.isLeft ? `Either.Left(${this.value})` : `Either.Right(${this.value})`
   }
 }
 

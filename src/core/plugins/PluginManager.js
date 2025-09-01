@@ -1,85 +1,230 @@
 const Result = require('../errors/Result')
 
+/**
+ * Plugin Manager - Open/Closed Principle (OCP)
+ * Manages plugin registration, loading, and execution
+ */
 class PluginManager {
   constructor() {
     this.plugins = new Map()
-    this.hooks = new Map()
+    this.enabledPlugins = new Map()
   }
 
-  registerPlugin(plugin) {
+  /**
+   * Register a plugin
+   * @param {string} name - Plugin name
+   * @param {IPlugin} plugin - Plugin instance
+   * @returns {Result} Registration result
+   */
+  register(name, plugin) {
     return Result.from(() => {
-      if (!plugin || typeof plugin.getName !== 'function') {
-        throw new Error('Invalid plugin: must implement getName method')
-      }
-
-      const name = plugin.getName()
       if (this.plugins.has(name)) {
-        throw new Error(`Plugin ${name} is already registered`)
+        throw new Error(`Plugin '${name}' is already registered`)
       }
 
       this.plugins.set(name, plugin)
-      plugin.initialize()
 
-      return plugin
+      if (plugin.isEnabled()) {
+        this.enabledPlugins.set(name, plugin)
+      }
+
+      return { name, plugin, registered: true }
     })
   }
 
-  unregisterPlugin(name) {
+  /**
+   * Unregister a plugin
+   * @param {string} name - Plugin name
+   * @returns {Result} Unregistration result
+   */
+  unregister(name) {
     return Result.from(() => {
       if (!this.plugins.has(name)) {
-        throw new Error(`Plugin ${name} is not registered`)
+        throw new Error(`Plugin '${name}' is not registered`)
       }
 
-      const plugin = this.plugins.get(name)
-      plugin.shutdown()
       this.plugins.delete(name)
+      this.enabledPlugins.delete(name)
 
-      return true
+      return { name, unregistered: true }
     })
   }
 
-  executePlugin(name, context = {}) {
-    return Result.from(() => {
-      if (!this.plugins.has(name)) {
-        throw new Error(`Plugin ${name} is not registered`)
-      }
-
-      const plugin = this.plugins.get(name)
-      return plugin.execute(context)
-    })
-  }
-
-  registerHook(eventName, callback) {
-    if (!this.hooks.has(eventName)) {
-      this.hooks.set(eventName, [])
-    }
-    this.hooks.get(eventName).push(callback)
-  }
-
-  executeHook(eventName, data) {
+  /**
+   * Initialize all registered plugins
+   * @param {Object} config - Global plugin configuration
+   * @returns {Promise<Result>} Initialization result
+   */
+  async initializeAll(config = {}) {
     return Result.fromAsync(async () => {
-      if (!this.hooks.has(eventName)) {
-        return data
+      const results = []
+
+      for (const [name, plugin] of this.plugins) {
+        try {
+          const pluginConfig = config[name] || {}
+          await plugin.initialize(pluginConfig)
+
+          // Update enabled status after initialization
+          if (plugin.isEnabled()) {
+            this.enabledPlugins.set(name, plugin)
+          } else {
+            this.enabledPlugins.delete(name)
+          }
+
+          results.push({ name, initialized: true })
+        } catch (error) {
+          results.push({ name, initialized: false, error: error.message })
+        }
       }
 
-      const hooks = this.hooks.get(eventName)
-      let result = data
-
-      for (const hook of hooks) {
-        result = await hook(result)
-      }
-
-      return result
+      return results
     })
   }
 
-  getRegisteredPlugins() {
-    return Array.from(this.plugins.keys())
+  /**
+   * Execute a plugin by name
+   * @param {string} name - Plugin name
+   * @param {*} input - Plugin input
+   * @returns {Promise<Result>} Plugin execution result
+   */
+  async execute(name, input) {
+    return Result.fromAsync(async () => {
+      const plugin = this.enabledPlugins.get(name)
+      if (!plugin) {
+        throw new Error(`Plugin '${name}' is not registered or not enabled`)
+      }
+
+      return await plugin.execute(input)
+    })
   }
 
+  /**
+   * Execute all enabled plugins of a specific type
+   * @param {string} pluginType - Plugin type filter
+   * @param {*} input - Plugin input
+   * @returns {Promise<Result>} Array of plugin execution results
+   */
+  async executeAll(pluginType, input) {
+    return Result.fromAsync(async () => {
+      const results = []
+
+      for (const [name, plugin] of this.enabledPlugins) {
+        // Skip plugins that don't match the type filter
+        if (pluginType && !plugin.constructor.name.toLowerCase().includes(pluginType.toLowerCase())) {
+          continue
+        }
+
+        try {
+          const result = await plugin.execute(input)
+          results.push({ name, result, success: true })
+        } catch (error) {
+          results.push({ name, error: error.message, success: false })
+        }
+      }
+
+      return results
+    })
+  }
+
+  /**
+   * Get plugin by name
+   * @param {string} name - Plugin name
+   * @returns {IPlugin|null} Plugin instance or null
+   */
   getPlugin(name) {
-    return this.plugins.get(name)
+    return this.plugins.get(name) || null
+  }
+
+  /**
+   * Get all registered plugins
+   * @returns {Array} Array of plugin names and instances
+   */
+  getAllPlugins() {
+    return Array.from(this.plugins.entries()).map(([name, plugin]) => ({
+      name,
+      plugin,
+      enabled: plugin.isEnabled(),
+      version: plugin.getVersion()
+    }))
+  }
+
+  /**
+   * Get all enabled plugins
+   * @returns {Array} Array of enabled plugin names and instances
+   */
+  getEnabledPlugins() {
+    return Array.from(this.enabledPlugins.entries()).map(([name, plugin]) => ({
+      name,
+      plugin,
+      version: plugin.getVersion()
+    }))
+  }
+
+  /**
+   * Enable a plugin
+   * @param {string} name - Plugin name
+   * @returns {Result} Enable result
+   */
+  enable(name) {
+    return Result.from(() => {
+      const plugin = this.plugins.get(name)
+      if (!plugin) {
+        throw new Error(`Plugin '${name}' is not registered`)
+      }
+
+      plugin.enabled = true
+      this.enabledPlugins.set(name, plugin)
+
+      return { name, enabled: true }
+    })
+  }
+
+  /**
+   * Disable a plugin
+   * @param {string} name - Plugin name
+   * @returns {Result} Disable result
+   */
+  disable(name) {
+    return Result.from(() => {
+      const plugin = this.plugins.get(name)
+      if (!plugin) {
+        throw new Error(`Plugin '${name}' is not registered`)
+      }
+
+      plugin.enabled = false
+      this.enabledPlugins.delete(name)
+
+      return { name, enabled: false }
+    })
+  }
+
+  /**
+   * Cleanup all plugins
+   * @returns {Promise<Result>} Cleanup result
+   */
+  async cleanup() {
+    return Result.fromAsync(async () => {
+      const results = []
+
+      for (const [name, plugin] of this.plugins) {
+        try {
+          await plugin.cleanup()
+          results.push({ name, cleaned: true })
+        } catch (error) {
+          results.push({ name, cleaned: false, error: error.message })
+        }
+      }
+
+      this.plugins.clear()
+      this.enabledPlugins.clear()
+
+      return results
+    })
   }
 }
 
-module.exports = PluginManager
+// Global plugin manager instance
+const pluginManager = new PluginManager()
+
+module.exports = pluginManager
+module.exports.PluginManager = PluginManager

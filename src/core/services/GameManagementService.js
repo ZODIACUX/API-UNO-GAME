@@ -2,56 +2,53 @@ const BaseService = require('./BaseService')
 const Result = require('../errors/Result')
 
 /**
- * Service responsible for game management operations
- * Follows Single Responsibility Principle - only handles game lifecycle management
+ * Game Management Service - Implements SRP (Single Responsibility Principle)
+ * Handles game lifecycle management operations only
  */
 class GameManagementService extends BaseService {
-  constructor(gameRepository, participantRepository) {
+  constructor(gameRepository, gameParticipantRepository) {
     super(gameRepository)
-    this.participantRepository = participantRepository
+    this.gameParticipantRepository = gameParticipantRepository
   }
 
-  async createGame(gameData, creatorId, creatorUsername) {
+  /**
+   * Create a new game
+   * @param {string} name - Game name
+   * @param {number} creatorId - Creator user ID
+   * @param {number} maxPlayers - Maximum number of players
+   * @returns {Promise<Result>} Result containing created game
+   */
+  async createGame(name, creatorId, maxPlayers = 4) {
     return Result.fromAsync(async () => {
-      const { name, rules } = gameData
-
-      const game = {
+      const gameData = {
         name,
-        rules: rules || 'Standard UNO rules apply',
         creatorId,
+        maxPlayers,
         status: 'waiting',
-        gameData: {
-          deck: this.generateDeck(),
-          players: {}
-        }
+        currentDirection: 'clockwise',
+        currentPlayer: null,
+        currentColor: null,
+        currentValue: null
       }
 
-      const createResult = await this.repository.create(game)
-      if (!createResult.isSuccess) {
-        throw new Error('Failed to create game')
+      const result = await this.repository.create(gameData)
+      if (!result.isSuccess) {
+        throw result.error
       }
 
-      const savedGame = createResult.value
-
-      // Add creator as participant
-      const participantResult = await this.participantRepository.create({
-        gameId: savedGame.id,
-        userId: creatorId,
-        username: creatorUsername,
-        isReady: true
-      })
-
-      if (!participantResult.isSuccess) {
-        throw new Error('Failed to add creator as participant')
-      }
-
-      return savedGame
+      return result.value
     })
   }
 
+  /**
+   * Join an existing game
+   * @param {number} gameId - Game ID
+   * @param {number} userId - User ID
+   * @param {string} username - Username
+   * @returns {Promise<Result>} Result containing join result
+   */
   async joinGame(gameId, userId, username) {
     return Result.fromAsync(async () => {
-      // Check if game exists and is joinable
       const gameResult = await this.repository.findById(gameId)
       if (!gameResult.isSuccess) {
         throw new Error('Game not found')
@@ -59,34 +56,43 @@ class GameManagementService extends BaseService {
 
       const game = gameResult.value
       if (game.status !== 'waiting') {
-        throw new Error('Game already started or finished')
+        throw new Error('Game already started')
       }
 
-      // Check if user is already in the game
-      const existingParticipant = await this.participantRepository.findBy({
+      // Check if user is already in game
+      const existingParticipant = await this.gameParticipantRepository.findOne({
         gameId,
         userId
       })
 
-      if (existingParticipant.isSuccess && existingParticipant.value) {
+      if (existingParticipant.isSuccess) {
         throw new Error('User already in game')
       }
 
       // Add participant
-      const participantResult = await this.participantRepository.create({
+      const participantResult = await this.gameParticipantRepository.create({
         gameId,
         userId,
-        username
+        username,
+        isReady: false,
+        score: 0,
+        cards: []
       })
 
       if (!participantResult.isSuccess) {
-        throw new Error('Failed to join game')
+        throw participantResult.error
       }
 
-      return participantResult.value
+      return { message: 'User joined the game successfully' }
     })
   }
 
+  /**
+   * Start the game when all players are ready
+   * @param {number} gameId - Game ID
+   * @param {number} userId - User ID (must be creator)
+   * @returns {Promise<Result>} Result containing start result
+   */
   async startGame(gameId, userId) {
     return Result.fromAsync(async () => {
       const gameResult = await this.repository.findById(gameId)
@@ -99,31 +105,38 @@ class GameManagementService extends BaseService {
         throw new Error('Only game creator can start the game')
       }
 
-      // Check minimum players
-      const participantsResult = await this.participantRepository.findBy({ gameId })
-      if (!participantsResult.isSuccess) {
-        throw new Error('Failed to get participants')
-      }
-
-      const participants = participantsResult.value
-      if (!Array.isArray(participants) || participants.length < 2) {
+      // Get all participants
+      const participantsResult = await this.gameParticipantRepository.findBy({ gameId })
+      if (!participantsResult.isSuccess || participantsResult.value.length < 2) {
         throw new Error('Need at least 2 players to start')
       }
 
-      // Start the game
+      // Check if all players are ready
+      const notReadyPlayers = participantsResult.value.filter(p => !p.isReady)
+      if (notReadyPlayers.length > 0) {
+        throw new Error('All players must be ready to start')
+      }
+
+      // Update game status
       const updateResult = await this.repository.update(gameId, {
         status: 'in_progress',
-        currentPlayer: participants[0].username
+        currentPlayerId: participantsResult.value[0].userId
       })
 
       if (!updateResult.isSuccess) {
-        throw new Error('Failed to start game')
+        throw updateResult.error
       }
 
-      return true
+      return { message: 'Game started successfully' }
     })
   }
 
+  /**
+   * End a game
+   * @param {number} gameId - Game ID
+   * @param {number} userId - User ID (must be creator)
+   * @returns {Promise<Result>} Result containing end result
+   */
   async endGame(gameId, userId) {
     return Result.fromAsync(async () => {
       const gameResult = await this.repository.findById(gameId)
@@ -141,28 +154,44 @@ class GameManagementService extends BaseService {
       })
 
       if (!updateResult.isSuccess) {
-        throw new Error('Failed to end game')
+        throw updateResult.error
       }
 
-      return true
+      return { message: 'Game ended successfully' }
     })
   }
 
+  /**
+   * Leave a game
+   * @param {number} gameId - Game ID
+   * @param {number} userId - User ID
+   * @returns {Promise<Result>} Result containing leave result
+   */
   async leaveGame(gameId, userId) {
     return Result.fromAsync(async () => {
-      const deleteResult = await this.participantRepository.delete({
+      const participantResult = await this.gameParticipantRepository.findOne({
         gameId,
         userId
       })
 
-      if (!deleteResult.isSuccess) {
+      if (!participantResult.isSuccess) {
         throw new Error('User not in game')
       }
 
-      return true
+      const deleteResult = await this.gameParticipantRepository.delete(participantResult.value.id)
+      if (!deleteResult.isSuccess) {
+        throw deleteResult.error
+      }
+
+      return { message: 'User left the game successfully' }
     })
   }
 
+  /**
+   * Get game state
+   * @param {number} gameId - Game ID
+   * @returns {Promise<Result>} Result containing game state
+   */
   async getGameState(gameId) {
     return Result.fromAsync(async () => {
       const gameResult = await this.repository.findById(gameId)
@@ -171,120 +200,38 @@ class GameManagementService extends BaseService {
       }
 
       const game = gameResult.value
+      const participantsResult = await this.gameParticipantRepository.findBy({ gameId })
+
       return {
-        game_id: game.id,
-        state: game.status
+        gameId: game.id,
+        name: game.name,
+        status: game.status,
+        creatorId: game.creatorId,
+        maxPlayers: game.maxPlayers,
+        currentPlayer: game.currentPlayerId,
+        players: participantsResult.isSuccess ? participantsResult.value : []
       }
     })
   }
 
+  /**
+   * Get game players
+   * @param {number} gameId - Game ID
+   * @returns {Promise<Result>} Result containing players list
+   */
   async getGamePlayers(gameId) {
     return Result.fromAsync(async () => {
-      const participantsResult = await this.participantRepository.findBy({ gameId })
+      const participantsResult = await this.gameParticipantRepository.findBy({ gameId })
       if (!participantsResult.isSuccess) {
-        throw new Error('Failed to get participants')
+        throw new Error('Game not found')
       }
 
-      const participants = participantsResult.value
-      const players = Array.isArray(participants)
-        ? participants.map(p => p.username)
-        : []
-
+      const players = participantsResult.value.map(p => p.username)
       return {
-        game_id: parseInt(gameId),
+        gameId,
         players
       }
     })
-  }
-
-  async getCurrentPlayer(gameId) {
-    return Result.fromAsync(async () => {
-      const gameResult = await this.repository.findById(gameId)
-      if (!gameResult.isSuccess) {
-        throw new Error('Game not found')
-      }
-
-      const game = gameResult.value
-      return {
-        game_id: game.id,
-        current_player: game.currentPlayer || 'Player1'
-      }
-    })
-  }
-
-  async getTopCard(gameId) {
-    return Result.fromAsync(async () => {
-      const gameResult = await this.repository.findById(gameId)
-      if (!gameResult.isSuccess) {
-        throw new Error('Game not found')
-      }
-
-      const game = gameResult.value
-      return {
-        game_id: game.id,
-        top_card: game.topCard || 'Ace of Spades'
-      }
-    })
-  }
-
-  async getScores(gameId) {
-    return Result.fromAsync(async () => {
-      const participantsResult = await this.participantRepository.findBy({ gameId })
-      if (!participantsResult.isSuccess) {
-        throw new Error('Failed to get participants')
-      }
-
-      const participants = participantsResult.value
-      const scores = {}
-
-      if (Array.isArray(participants)) {
-        participants.forEach(p => {
-          scores[p.username] = p.score || 0
-        })
-      }
-
-      return {
-        game_id: parseInt(gameId),
-        scores
-      }
-    })
-  }
-
-  // Utility method for generating UNO deck
-  generateDeck() {
-    const colors = ['Red', 'Blue', 'Green', 'Yellow']
-    const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    const specials = ['Skip', 'Reverse', 'Draw Two']
-
-    let deck = []
-
-    colors.forEach(color => {
-      numbers.forEach(number => {
-        deck.push(`${color} ${number}`)
-        if (number !== 0) deck.push(`${color} ${number}`)
-      })
-
-      specials.forEach(special => {
-        deck.push(`${color} ${special}`)
-        deck.push(`${color} ${special}`)
-      })
-    })
-
-    // Wild cards
-    for (let i = 0; i < 4; i++) {
-      deck.push('Wild')
-      deck.push('Wild Draw Four')
-    }
-
-    return this.shuffleDeck(deck)
-  }
-
-  shuffleDeck(deck) {
-    for (let i = deck.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [deck[i], deck[j]] = [deck[j], deck[i]]
-    }
-    return deck
   }
 }
 
