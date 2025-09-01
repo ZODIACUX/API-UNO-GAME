@@ -1,31 +1,17 @@
 const { Router } = require('express')
 const { UnoController } = require('../controllers/UnoController')
-<<<<<<< Updated upstream
-const { authenticateToken } = require('../middleware/auth')
-=======
 const { authenticateToken } = require('../middlewares/auth')
 const { validateRequest } = require('../middlewares/gameValidation')
->>>>>>> Stashed changes
 const {
   registerUserSchema,
   loginUserSchema,
   logoutUserSchema,
   gameActionSchema,
   gameIdOnlySchema,
-<<<<<<< Updated upstream
-  cardDistributionSchema,
-  cardPlaySchema,
-  cardDrawSchema,
-  unoCallSchema,
-  unoChallengeSchema,
-  validateRequest
-} = require('../validation/unoSchemas')
-=======
   nextTurnSchema,
   playCardSchema,
   drawCardSchema
 } = require('../middlewares/unoSchemas')
->>>>>>> Stashed changes
 
 const router = Router()
 const unoController = new UnoController()
@@ -72,30 +58,22 @@ router.post('/game/top-card', validateRequest(gameIdOnlySchema), (req, res) => u
 // 14. Obtener puntuaciones (NO requiere autenticación según spec)
 router.post('/game/scores', validateRequest(gameIdOnlySchema), (req, res) => unoController.getScores(req, res))
 
-<<<<<<< Updated upstream
 // 15. Distribuir cartas (NUEVO - Requirement 1)
-router.post('/cards/deal', validateRequest(cardDistributionSchema), (req, res) => unoController.dealCards(req, res))
+router.post('/cards/deal', (req, res) => unoController.dealCards(req, res))
 
-// 16. Jugar carta (NUEVO - Requirement 2)
-router.put('/cards/play', authenticateToken, validateRequest(cardPlaySchema), (req, res) => unoController.playCard(req, res))
-
-// 17. Dibujar carta (NUEVO - Requirement 3)
-router.put('/cards/draw', validateRequest(cardDrawSchema), (req, res) => unoController.drawCard(req, res))
-
-// 18. Llamar UNO (NUEVO - Requirement 4)
-router.patch('/uno/call', validateRequest(unoCallSchema), (req, res) => unoController.callUno(req, res))
-
-// 19. Desafiar UNO (NUEVO - Requirement 5)
-router.post('/uno/challenge', validateRequest(unoChallengeSchema), (req, res) => unoController.challengeUno(req, res))
-=======
-// 15. Siguiente turno (NO requiere autenticación según spec)
+// 16. Siguiente turno (NO requiere autenticación según spec)
 router.post('/nextTurn', validateRequest(nextTurnSchema), (req, res) => unoController.nextTurn(req, res))
 
-// 16. Jugar carta (Skip, Reverse) - NUEVO
+// 17. Jugar carta (Skip, Reverse) - NUEVO
 router.post('/playCard', validateRequest(playCardSchema), (req, res) => unoController.playCard(req, res))
 
-// 17. Robar carta - NUEVO
+// 18. Robar carta - NUEVO
 router.post('/drawCard', validateRequest(drawCardSchema), (req, res) => unoController.drawCard(req, res))
->>>>>>> Stashed changes
+
+// 19. Llamar UNO - NUEVO
+router.patch('/uno/call', (req, res) => unoController.callUno(req, res))
+
+// 20. Desafiar UNO - NUEVO
+router.post('/uno/challenge', (req, res) => unoController.challengeUno(req, res))
 
 module.exports = router
