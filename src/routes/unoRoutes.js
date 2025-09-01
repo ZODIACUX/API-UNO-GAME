@@ -1,13 +1,18 @@
 const { Router } = require('express')
 const { UnoController } = require('../controllers/UnoController')
 const { authenticateToken } = require('../middleware/auth')
-const { validateRequest } = require('../middleware/validation')
 const {
   registerUserSchema,
   loginUserSchema,
   logoutUserSchema,
   gameActionSchema,
-  gameIdOnlySchema
+  gameIdOnlySchema,
+  cardDistributionSchema,
+  cardPlaySchema,
+  cardDrawSchema,
+  unoCallSchema,
+  unoChallengeSchema,
+  validateRequest
 } = require('../validation/unoSchemas')
 
 const router = Router()
@@ -54,5 +59,20 @@ router.post('/game/top-card', validateRequest(gameIdOnlySchema), (req, res) => u
 
 // 14. Obtener puntuaciones (NO requiere autenticación según spec)
 router.post('/game/scores', validateRequest(gameIdOnlySchema), (req, res) => unoController.getScores(req, res))
+
+// 15. Distribuir cartas (NUEVO - Requirement 1)
+router.post('/cards/deal', validateRequest(cardDistributionSchema), (req, res) => unoController.dealCards(req, res))
+
+// 16. Jugar carta (NUEVO - Requirement 2)
+router.put('/cards/play', authenticateToken, validateRequest(cardPlaySchema), (req, res) => unoController.playCard(req, res))
+
+// 17. Dibujar carta (NUEVO - Requirement 3)
+router.put('/cards/draw', validateRequest(cardDrawSchema), (req, res) => unoController.drawCard(req, res))
+
+// 18. Llamar UNO (NUEVO - Requirement 4)
+router.patch('/uno/call', validateRequest(unoCallSchema), (req, res) => unoController.callUno(req, res))
+
+// 19. Desafiar UNO (NUEVO - Requirement 5)
+router.post('/uno/challenge', validateRequest(unoChallengeSchema), (req, res) => unoController.challengeUno(req, res))
 
 module.exports = router

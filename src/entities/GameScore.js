@@ -1,35 +1,20 @@
 const { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } = require('typeorm')
 
-@Entity('game_scores')
 class GameScore {
-      @PrimaryGeneratedColumn()
-        id
-
-      @Column({ type: 'int' })
-        gameId
-
-      @Column({ type: 'int' })
-        participantId
-
-      @Column({ type: 'int', default: 0 })
-        points
-
-      @Column({ type: 'int', default: 1 })
-        position
-
-      @CreateDateColumn()
-        createdAt
-
-      @UpdateDateColumn()
-        updatedAt
-
-      @ManyToOne('UnoGame', 'scores')
-      @JoinColumn({ name: 'gameId' })
-        game
-
-      @ManyToOne('GamePlayer', 'scores')
-      @JoinColumn({ name: 'participantId' })
-        participant
 }
+
+// Apply decorators using the functional approach
+Entity('game_scores')(GameScore)
+PrimaryGeneratedColumn()(GameScore.prototype, 'id')
+Column({ type: 'int' })(GameScore.prototype, 'gameId')
+Column({ type: 'int' })(GameScore.prototype, 'participantId')
+Column({ type: 'int', default: 0 })(GameScore.prototype, 'points')
+Column({ type: 'int', default: 1 })(GameScore.prototype, 'position')
+CreateDateColumn()(GameScore.prototype, 'createdAt')
+UpdateDateColumn()(GameScore.prototype, 'updatedAt')
+ManyToOne('UnoGame', 'scores')(GameScore.prototype, 'game')
+JoinColumn({ name: 'gameId' })(GameScore.prototype, 'game')
+ManyToOne('GamePlayer', 'scores')(GameScore.prototype, 'participant')
+JoinColumn({ name: 'participantId' })(GameScore.prototype, 'participant')
 
 module.exports = { GameScore }
