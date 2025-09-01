@@ -1,64 +1,101 @@
-const { AppDataSource } = require('../database/data-source')
-const { GameScore } = require('../entities/GameScore')
+const BaseRepository = require('../core/repositories/BaseRepository')
+const Result = require('../core/errors/Result')
 
-class GameScoreRepository {
-  constructor() {
-    this.repository = AppDataSource.getRepository(GameScore)
+/**
+ * Game Score Repository - Handles game score data access
+ */
+class GameScoreRepository extends BaseRepository {
+  constructor(dataSource) {
+    super(dataSource, 'GameScore')
   }
 
-  async findById(id) {
-    return await this.repository.findOne({
-      where: { id },
-      relations: ['participant', 'game']
-    })
-  }
-
+  /**
+   * Find score by game and participant
+   * @param {number} gameId - Game ID
+   * @param {number} participantId - Participant ID
+   * @returns {Promise<Result>} Result containing score
+   */
   async findByGameAndParticipant(gameId, participantId) {
-    return await this.repository.findOne({
-      where: { gameId, participantId },
-      relations: ['participant', 'game']
+    return Result.fromAsync(async () => {
+      const score = await this.getRepository().findOne({
+        where: { gameId, participantId }
+      })
+      if (!score) {
+        throw new Error('Score not found')
+      }
+      return score
     })
   }
 
+  /**
+   * Find all scores for a game
+   * @param {number} gameId - Game ID
+   * @returns {Promise<Result>} Result containing scores
+   */
   async findByGame(gameId) {
-    return await this.repository.find({
-      where: { gameId },
-      relations: ['participant', 'game'],
-      order: {
-        points: 'DESC'
+    return Result.fromAsync(async () => {
+      const scores = await this.getRepository().find({
+        where: { gameId },
+        order: { score: 'DESC' }
+      })
+      return scores
+    })
+  }
+
+  /**
+   * Update score
+   * @param {number} gameId - Game ID
+   * @param {number} participantId - Participant ID
+   * @param {number} score - New score
+   * @returns {Promise<Result>} Result containing updated score
+   */
+  async updateScore(gameId, participantId, score) {
+    return Result.fromAsync(async () => {
+      const existingScore = await this.getRepository().findOne({
+        where: { gameId, participantId }
+      })
+
+      if (existingScore) {
+        existingScore.score = score
+        return await this.getRepository().save(existingScore)
+      } else {
+        const newScore = this.getRepository().create({
+          gameId,
+          participantId,
+          score
+        })
+        return await this.getRepository().save(newScore)
       }
     })
   }
 
-  async create(scoreData) {
-    const score = this.repository.create(scoreData)
-    return await this.repository.save(score)
-  }
-
-  async update(id, scoreData) {
-    await this.repository.update(id, scoreData)
-    return await this.findById(id)
-  }
-
-  async getHighScores(limit = 10) {
-    return await this.repository.find({
-      relations: ['participant', 'participant.user', 'game'],
-      order: {
-        points: 'DESC'
-      },
-      take: limit
+  /**
+   * Get top scores
+   * @param {number} limit - Number of top scores to return
+   * @returns {Promise<Result>} Result containing top scores
+   */
+  async getTopScores(limit = 10) {
+    return Result.fromAsync(async () => {
+      const scores = await this.getRepository().find({
+        order: { score: 'DESC' },
+        take: limit,
+        relations: ['participant', 'game']
+      })
+      return scores
     })
   }
 
-  async getParticipantScores(participantId) {
-    return await this.repository.find({
-      where: { participantId },
-      relations: ['game'],
-      order: {
-        createdAt: 'DESC'
-      }
+  /**
+   * Delete scores for a game
+   * @param {number} gameId - Game ID
+   * @returns {Promise<Result>} Result containing deletion result
+   */
+  async deleteByGame(gameId) {
+    return Result.fromAsync(async () => {
+      const result = await this.getRepository().delete({ gameId })
+      return result
     })
   }
 }
 
-module.exports = new GameScoreRepository()
+module.exports = GameScoreRepository

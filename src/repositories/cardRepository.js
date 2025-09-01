@@ -1,73 +1,86 @@
 const BaseRepository = require('../core/repositories/BaseRepository')
-const { AppDataSource } = require('../database/data-source')
-const { Card } = require('../entities/Card')
-const { IsNull } = require('typeorm')
+const { Card } = require('../models/Card')
 const Result = require('../core/errors/Result')
 
+/**
+ * Card Repository - Implements DIP and LSP
+ * Dependency Inversion: Depends on IRepository interface
+ * Liskov Substitution: Can substitute BaseRepository anywhere it's expected
+ */
 class CardRepository extends BaseRepository {
-  constructor() {
-    super(Card, AppDataSource)
+  constructor(dataSource) {
+    super(dataSource, Card)
   }
 
-  async findByType(type) {
+  /**
+   * Find cards by game ID
+   * @param {number} gameId - Game ID
+   * @returns {Promise<Result>} Result containing cards or error
+   */
+  async findByGameId(gameId) {
     return Result.fromAsync(async () => {
-      if (!type) {
-        throw new Error('Type parameter is required')
+      if (!gameId) {
+        throw new Error('Game ID is required')
       }
 
-      const repository = await this.getRepository()
-      return await repository.find({
-        where: { type }
+      const cards = await this.getRepository().find({
+        where: { gameId },
+        order: { createdAt: 'ASC' }
       })
+
+      return cards
     })
   }
 
-  async findByColor(color) {
+  /**
+   * Find cards by player ID
+   * @param {number} playerId - Player ID
+   * @returns {Promise<Result>} Result containing cards or error
+   */
+  async findByPlayerId(playerId) {
     return Result.fromAsync(async () => {
-      if (!color) {
-        throw new Error('Color parameter is required')
+      if (!playerId) {
+        throw new Error('Player ID is required')
       }
 
-      const repository = await this.getRepository()
-      return await repository.find({
-        where: { color }
+      const cards = await this.getRepository().find({
+        where: { playerId },
+        order: { createdAt: 'ASC' }
       })
+
+      return cards
     })
   }
 
-  async findByValue(value) {
+  /**
+   * Shuffle deck
+   * @param {number} gameId - Game ID
+   * @returns {Promise<Result>} Result containing shuffled cards or error
+   */
+  async shuffleDeck(gameId) {
     return Result.fromAsync(async () => {
-      const repository = await this.getRepository()
-      return await repository.find({
-        where: { value: value === null ? IsNull() : value }
-      })
-    })
-  }
-
-  async createMany(cardsData) {
-    return Result.fromAsync(async () => {
-      if (!Array.isArray(cardsData) || cardsData.length === 0) {
-        throw new Error('Cards data must be a non-empty array')
+      if (!gameId) {
+        throw new Error('Game ID is required')
       }
 
-      const repository = await this.getRepository()
-      const cards = repository.create(cardsData)
-      return await repository.save(cards)
-    })
-  }
+      const cards = await this.getRepository().find({
+        where: { gameId, location: 'deck' }
+      })
 
-  async findCardsByTypeAndColor(type, color) {
-    return Result.fromAsync(async () => {
-      if (!type || !color) {
-        throw new Error('Both type and color parameters are required')
+      // Simple shuffle algorithm
+      for (let i = cards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cards[i], cards[j]] = [cards[j], cards[i]]
       }
 
-      const repository = await this.getRepository()
-      return await repository.find({
-        where: { type, color }
-      })
+      // Update shuffled order
+      for (let i = 0; i < cards.length; i++) {
+        await this.getRepository().update(cards[i].id, { order: i })
+      }
+
+      return cards
     })
   }
 }
 
-module.exports = new CardRepository()
+module.exports = CardRepository

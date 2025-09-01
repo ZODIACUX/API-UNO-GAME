@@ -1,82 +1,155 @@
-const { AppDataSource } = require('../database/data-source')
-const { GameParticipant } = require('../entities/GameParticipant')
+const BaseRepository = require('../core/repositories/BaseRepository')
+const { GameParticipant } = require('../models/GameParticipant')
+const Result = require('../core/errors/Result')
 
-class GameParticipantRepository {
-  constructor() {
-    this.repository = AppDataSource.getRepository(GameParticipant)
+/**
+ * Game Participant Repository - Implements DIP and LSP
+ * Dependency Inversion: Depends on IRepository interface
+ * Liskov Substitution: Can substitute BaseRepository anywhere it's expected
+ */
+class GameParticipantRepository extends BaseRepository {
+  constructor(dataSource) {
+    super(dataSource, GameParticipant)
   }
 
-  async findById(id) {
-    return await this.repository.findOne({
-      where: { id },
-      relations: ['user', 'game', 'score']
-    })
-  }
-
-  async findByGameAndUser(gameId, userId) {
-    return await this.repository.findOne({
-      where: { gameId, userId },
-      relations: ['user', 'game', 'score']
-    })
-  }
-
-  async findByGame(gameId) {
-    return await this.repository.find({
-      where: { gameId },
-      relations: ['user', 'game', 'score'],
-      order: {
-        score: { points: 'DESC' }
+  /**
+   * Find participants by game ID
+   * @param {number} gameId - Game ID
+   * @returns {Promise<Result>} Result containing participants or error
+   */
+  async findByGameId(gameId) {
+    return Result.fromAsync(async () => {
+      if (!gameId) {
+        throw new Error('Game ID is required')
       }
+
+      const participants = await this.getRepository().find({
+        where: { gameId },
+        relations: ['user'],
+        order: { joinedAt: 'ASC' }
+      })
+
+      return participants
     })
   }
 
-  async create(participantData) {
-    const participant = this.repository.create(participantData)
-    return await this.repository.save(participant)
+  /**
+   * Find participant by game and user ID
+   * @param {number} gameId - Game ID
+   * @param {number} userId - User ID
+   * @returns {Promise<Result>} Result containing participant or error
+   */
+  async findByGameAndUserId(gameId, userId) {
+    return Result.fromAsync(async () => {
+      if (!gameId || !userId) {
+        throw new Error('Game ID and User ID are required')
+      }
+
+      const participant = await this.getRepository().findOne({
+        where: { gameId, userId },
+        relations: ['user', 'game']
+      })
+
+      return participant
+    })
   }
 
-  async update(id, participantData) {
-    await this.repository.update(id, participantData)
-    return await this.findById(id)
+  /**
+   * Update participant ready status
+   * @param {number} gameId - Game ID
+   * @param {number} userId - User ID
+   * @param {boolean} isReady - Ready status
+   * @returns {Promise<Result>} Result containing update result or error
+   */
+  async updateReadyStatus(gameId, userId, isReady) {
+    return Result.fromAsync(async () => {
+      if (!gameId || !userId) {
+        throw new Error('Game ID and User ID are required')
+      }
+
+      const result = await this.getRepository().update(
+        { gameId, userId },
+        { isReady, readyAt: isReady ? new Date() : null }
+      )
+
+      return result
+    })
   }
 
-  async delete(id) {
-    const result = await this.repository.delete(id)
-    return result.affected > 0
+  /**
+   * Update participant score
+   * @param {number} gameId - Game ID
+   * @param {number} userId - User ID
+   * @param {number} score - New score
+   * @returns {Promise<Result>} Result containing update result or error
+   */
+  async updateScore(gameId, userId, score) {
+    return Result.fromAsync(async () => {
+      if (!gameId || !userId) {
+        throw new Error('Game ID and User ID are required')
+      }
+
+      if (typeof score !== 'number' || score < 0) {
+        throw new Error('Score must be a non-negative number')
+      }
+
+      const result = await this.getRepository().update(
+        { gameId, userId },
+        { score }
+      )
+
+      return result
+    })
   }
 
-  async getParticipantStats(userId) {
-    return await this.repository
-      .createQueryBuilder('participant')
-      .leftJoin('participant.score', 'score')
-      .select([
-        'participant.id',
-        'COUNT(participant.id) as gamesPlayed',
-        'SUM(CASE WHEN score.position = 1 THEN 1 ELSE 0 END) as wins',
-        'AVG(score.points) as averagePoints'
-      ])
-      .where('participant.userId = :userId', { userId })
-      .groupBy('participant.id')
-      .getRawOne()
+  /**
+   * Get game leaderboard
+   * @param {number} gameId - Game ID
+   * @returns {Promise<Result>} Result containing leaderboard or error
+   */
+  async getLeaderboard(gameId) {
+    return Result.fromAsync(async () => {
+      if (!gameId) {
+        throw new Error('Game ID is required')
+      }
+
+      const participants = await this.getRepository().find({
+        where: { gameId },
+        relations: ['user'],
+        order: { score: 'DESC' }
+      })
+
+      const leaderboard = participants.map((participant, index) => ({
+        rank: index + 1,
+        username: participant.username,
+        score: participant.score,
+        isReady: participant.isReady
+      }))
+
+      return leaderboard
+    })
   }
 
-  async getLeaderboard(limit = 10) {
-    return await this.repository
-      .createQueryBuilder('participant')
-      .leftJoin('participant.score', 'score')
-      .leftJoin('participant.user', 'user')
-      .select([
-        'user.username',
-        'COUNT(participant.id) as gamesPlayed',
-        'SUM(CASE WHEN score.position = 1 THEN 1 ELSE 0 END) as wins',
-        'AVG(score.points) as averagePoints'
-      ])
-      .groupBy('user.id')
-      .orderBy('wins', 'DESC')
-      .addOrderBy('averagePoints', 'DESC')
-      .limit(limit)
-      .getRawMany()
+  /**
+   * Remove participant from game
+   * @param {number} gameId - Game ID
+   * @param {number} userId - User ID
+   * @returns {Promise<Result>} Result containing deletion result or error
+   */
+  async removeParticipant(gameId, userId) {
+    return Result.fromAsync(async () => {
+      if (!gameId || !userId) {
+        throw new Error('Game ID and User ID are required')
+      }
+
+      const result = await this.getRepository().delete({
+        gameId,
+        userId
+      })
+
+      return result
+    })
   }
 }
 
-module.exports = new GameParticipantRepository()
+module.exports = GameParticipantRepository

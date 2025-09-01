@@ -1,93 +1,184 @@
-const { AppDataSource } = require('../database/data-source')
-const { UnoGame } = require('../entities/UnoGame')
+const BaseRepository = require('../core/repositories/BaseRepository')
+const Result = require('../core/errors/Result')
 
-class UnoGameRepository {
-  constructor() {
-    this.repository = AppDataSource.getRepository(UnoGame)
+/**
+ * UNO Game Repository - Handles UNO game data access
+ */
+class UnoGameRepository extends BaseRepository {
+  constructor(dataSource) {
+    super(dataSource, 'UnoGame')
   }
 
-  async findById(id) {
-    return await this.repository.findOne({
-      where: { id },
-      relations: ['players', 'players.user', 'players.cards', 'cards', 'cards.card']
-    })
-  }
-
-  async findAll() {
-    return await this.repository.find({
-      relations: ['players', 'players.user']
-    })
-  }
-
+  /**
+   * Find games by status
+   * @param {string} status - Game status
+   * @returns {Promise<Result>} Result containing games
+   */
   async findByStatus(status) {
-    return await this.repository.find({
-      where: { status },
-      relations: ['players', 'players.user']
+    return Result.fromAsync(async () => {
+      const games = await this.getRepository().find({
+        where: { status },
+        relations: ['creator', 'participants']
+      })
+      return games
     })
   }
 
+  /**
+   * Find games by creator
+   * @param {number} creatorId - Creator ID
+   * @returns {Promise<Result>} Result containing games
+   */
   async findByCreator(creatorId) {
-    return await this.repository.find({
-      where: { creatorId },
-      relations: ['players', 'players.user']
+    return Result.fromAsync(async () => {
+      const games = await this.getRepository().find({
+        where: { creatorId },
+        relations: ['creator', 'participants'],
+        order: { createdAt: 'DESC' }
+      })
+      return games
     })
   }
 
-  async create(gameData) {
-    const game = this.repository.create(gameData)
-    return await this.repository.save(game)
-  }
-
-  async update(id, gameData) {
-    await this.repository.update(id, gameData)
-    return await this.findById(id)
-  }
-
-  async delete(id) {
-    const result = await this.repository.delete(id)
-    return result.affected > 0
-  }
-
+  /**
+   * Find active games (waiting or in progress)
+   * @returns {Promise<Result>} Result containing active games
+   */
   async findActiveGames() {
-    return await this.repository.find({
-      where: [
-        { status: 'waiting' },
-        { status: 'in_progress' }
-      ],
-      relations: ['players', 'players.user']
+    return Result.fromAsync(async () => {
+      const games = await this.getRepository().find({
+        where: [
+          { status: 'waiting' },
+          { status: 'in_progress' }
+        ],
+        relations: ['creator', 'participants']
+      })
+      return games
     })
   }
 
-  async getGameWithFullDetails(id) {
-    return await this.repository.findOne({
-      where: { id },
-      relations: [
-        'players',
-        'players.user',
-        'players.cards',
-        'players.cards.card',
-        'cards',
-        'cards.card'
-      ]
+  /**
+   * Update game status
+   * @param {number} gameId - Game ID
+   * @param {string} status - New status
+   * @returns {Promise<Result>} Result containing updated game
+   */
+  async updateStatus(gameId, status) {
+    return Result.fromAsync(async () => {
+      const game = await this.getRepository().findOne({ where: { id: gameId } })
+      if (!game) {
+        throw new Error('Game not found')
+      }
+
+      game.status = status
+      return await this.getRepository().save(game)
     })
   }
 
-  async getTopGames(limit = 10) {
-    return await this.repository
-      .createQueryBuilder('game')
-      .leftJoinAndSelect('game.players', 'players')
-      .select([
-        'game.id',
-        'game.name',
-        'game.status',
-        'game.createdAt',
-        'COUNT(players.id) as playerCount'
-      ])
-      .groupBy('game.id')
-      .orderBy('playerCount', 'DESC')
-      .limit(limit)
-      .getRawMany()
+  /**
+   * Update current player
+   * @param {number} gameId - Game ID
+   * @param {number} playerId - Player ID
+   * @returns {Promise<Result>} Result containing updated game
+   */
+  async updateCurrentPlayer(gameId, playerId) {
+    return Result.fromAsync(async () => {
+      const game = await this.getRepository().findOne({ where: { id: gameId } })
+      if (!game) {
+        throw new Error('Game not found')
+      }
+
+      game.currentPlayerId = playerId
+      return await this.getRepository().save(game)
+    })
+  }
+
+  /**
+   * Update game direction
+   * @param {number} gameId - Game ID
+   * @param {string} direction - New direction
+   * @returns {Promise<Result>} Result containing updated game
+   */
+  async updateDirection(gameId, direction) {
+    return Result.fromAsync(async () => {
+      const game = await this.getRepository().findOne({ where: { id: gameId } })
+      if (!game) {
+        throw new Error('Game not found')
+      }
+
+      game.currentDirection = direction
+      return await this.getRepository().save(game)
+    })
+  }
+
+  /**
+   * Get games with player count
+   * @param {number} limit - Maximum number of results
+   * @returns {Promise<Result>} Result containing games with player counts
+   */
+  async findGamesWithPlayerCount(limit = 10) {
+    return Result.fromAsync(async () => {
+      const games = await this.getRepository()
+        .createQueryBuilder('game')
+        .leftJoinAndSelect('game.participants', 'participant')
+        .loadRelationCountAndMap('game.playerCount', 'game.participants')
+        .take(limit)
+        .getMany()
+
+      return games
+    })
+  }
+
+  /**
+   * Find game with full details
+   * @param {number} gameId - Game ID
+   * @returns {Promise<Result>} Result containing game with full details
+   */
+  async findWithFullDetails(gameId) {
+    return Result.fromAsync(async () => {
+      const game = await this.getRepository().findOne({
+        where: { id: gameId },
+        relations: ['creator', 'participants', 'scores', 'cards']
+      })
+
+      if (!game) {
+        throw new Error('Game not found')
+      }
+
+      return game
+    })
+  }
+
+  /**
+   * Delete game and related data
+   * @param {number} gameId - Game ID
+   * @returns {Promise<Result>} Result containing deletion result
+   */
+  async deleteWithRelations(gameId) {
+    return Result.fromAsync(async () => {
+      const queryRunner = this.dataSource.createQueryRunner()
+      await queryRunner.connect()
+      await queryRunner.startTransaction()
+
+      try {
+        // Delete related data first
+        await queryRunner.manager.delete('GameScore', { gameId })
+        await queryRunner.manager.delete('GameParticipant', { gameId })
+        await queryRunner.manager.delete('GameCard', { gameId })
+
+        // Delete the game
+        const result = await queryRunner.manager.delete('UnoGame', { id: gameId })
+
+        await queryRunner.commitTransaction()
+        return result
+      } catch (error) {
+        await queryRunner.rollbackTransaction()
+        throw error
+      } finally {
+        await queryRunner.release()
+      }
+    })
   }
 }
 
-module.exports = new UnoGameRepository()
+module.exports = UnoGameRepository
