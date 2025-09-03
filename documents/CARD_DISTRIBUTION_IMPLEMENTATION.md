@@ -9,7 +9,7 @@ Successfully implemented the card distribution system for the UNO game API (Requ
 - **Purpose**: Handles card distribution operations following Single Responsibility Principle
 - **Key Features**:
   - Recursive card dealing algorithm
-  - Standard UNO deck generation (108 cards total)
+  - Standard UNO deck generation (10 cards total)
   - Fisher-Yates shuffling algorithm
   - Input validation and error handling
   - Result monad pattern for error handling
