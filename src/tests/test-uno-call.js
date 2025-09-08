@@ -8,7 +8,7 @@ const axios = require('axios')
 const BASE_URL = 'http://localhost:3000/api'
 
 // Test configuration
-const testConfig = {
+const _testConfig = {
   players: ['Player1', 'Player2'],
   cardsPerPlayer: 7
 }
@@ -56,14 +56,14 @@ async function testValidUnoCall() {
   try {
     // First, we need to simulate a game state where Player1 has exactly 1 card
     // In a real scenario, this would be set up through card distribution and playing
-    
+
     const response = await axios.patch(`${BASE_URL}/uno/call`, {
       player: 'Player1',
       action: 'Say UNO'
     })
 
     console.log('✅ Valid UNO call response:', response.data)
-    
+
     if (response.data.message === 'Player1 said UNO successfully.') {
       console.log('✅ UNO call message format is correct')
     } else {
@@ -86,7 +86,7 @@ async function testValidUnoCall() {
  */
 async function testInvalidUnoCallWrongCardCount() {
   try {
-    const response = await axios.patch(`${BASE_URL}/uno/call`, {
+    const _response = await axios.patch(`${BASE_URL}/uno/call`, {
       player: 'Player2',
       action: 'Say UNO'
     })
@@ -108,7 +108,7 @@ async function testInvalidUnoCallWrongCardCount() {
 async function testDuplicateUnoCall() {
   try {
     // Try to call UNO again with the same player
-    const response = await axios.patch(`${BASE_URL}/uno/call`, {
+    const _response = await axios.patch(`${BASE_URL}/uno/call`, {
       player: 'Player1',
       action: 'Say UNO'
     })
@@ -129,7 +129,7 @@ async function testDuplicateUnoCall() {
  */
 async function testInvalidAction() {
   try {
-    const response = await axios.patch(`${BASE_URL}/uno/call`, {
+    const _response = await axios.patch(`${BASE_URL}/uno/call`, {
       player: 'Player1',
       action: 'Invalid Action'
     })
@@ -150,7 +150,7 @@ async function testInvalidAction() {
  */
 async function testUnoCallValidation() {
   console.log('Testing UNO call validation logic...')
-  
+
   // Test validation schema
   const validRequest = {
     player: 'Player1',
@@ -184,10 +184,10 @@ async function testUnoCallValidation() {
  */
 async function testUnoMonitoring() {
   console.log('\n📋 Testing UNO Monitoring Functions')
-  
+
   // This would test the monitoring functions if we had a way to access them directly
   // In a real implementation, you might expose monitoring endpoints or test the service directly
-  
+
   console.log('⚠️  UNO monitoring functions are internal - would need direct service testing')
   console.log('   - checkUnoStatus(gameId)')
   console.log('   - getPlayersRequiringUno(gameId)')

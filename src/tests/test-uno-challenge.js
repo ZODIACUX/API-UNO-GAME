@@ -13,7 +13,7 @@ let gameId = null
 
 async function registerAndLoginUsers() {
   console.log('🔐 Registering and logging in test users...')
-  
+
   for (const user of testUsers) {
     try {
       // Register user
@@ -44,7 +44,7 @@ async function registerAndLoginUsers() {
 
 async function createAndSetupGame() {
   console.log('\n🎮 Creating and setting up game...')
-  
+
   try {
     // Create game
     const createResponse = await axios.post(`${BASE_URL}/game/create`, {
@@ -53,7 +53,7 @@ async function createAndSetupGame() {
     }, {
       headers: { Authorization: `Bearer ${authTokens['challenger1']}` }
     })
-    
+
     gameId = createResponse.data.game_id
     console.log(`✅ Created game with ID: ${gameId}`)
 
@@ -81,7 +81,7 @@ async function createAndSetupGame() {
 
 async function testChallengeValidation() {
   console.log('\n🧪 Testing challenge validation...')
-  
+
   // Test 1: Invalid input - missing challenger
   try {
     await axios.post(`${BASE_URL}/challenge`, {
@@ -128,29 +128,29 @@ async function testChallengeValidation() {
 
 async function testSuccessfulChallenge() {
   console.log('\n🎯 Testing successful challenge scenario...')
-  
+
   try {
     // First, let's check the current UNO status
     console.log('📊 Checking current UNO status...')
-    
+
     // Simulate a scenario where challenged1 has 1 card but hasn't called UNO
     // In a real scenario, this would be set up through game play
-    
+
     // Attempt challenge
     const challengeResponse = await axios.post(`${BASE_URL}/challenge`, {
       challenger: 'challenger1',
       challengedPlayer: 'challenged1'
     })
-    
+
     console.log('✅ Challenge processed successfully')
     console.log('📋 Challenge result:', challengeResponse.data)
-    
+
     if (challengeResponse.data.message.includes('Challenge successful')) {
       console.log('🎉 Challenge was successful - player drew penalty cards')
     } else {
       console.log('ℹ️  Challenge failed - player had called UNO on time')
     }
-    
+
   } catch (error) {
     console.log('ℹ️  Challenge test result:', error.response?.data || error.message)
     // This might fail if the game state doesn't have the right conditions
@@ -160,7 +160,7 @@ async function testSuccessfulChallenge() {
 
 async function testUnoCallIntegration() {
   console.log('\n🔗 Testing UNO call integration...')
-  
+
   try {
     // Test calling UNO first
     const unoCallResponse = await axios.patch(`${BASE_URL}/call`, {
@@ -168,7 +168,7 @@ async function testUnoCallIntegration() {
       action: 'Say UNO'
     })
     console.log('✅ UNO call successful:', unoCallResponse.data)
-    
+
     // Now try to challenge - should fail since UNO was called
     try {
       await axios.post(`${BASE_URL}/challenge`, {
@@ -183,7 +183,7 @@ async function testUnoCallIntegration() {
         console.log('ℹ️  Challenge result:', error.response?.data || error.message)
       }
     }
-    
+
   } catch (error) {
     console.log('ℹ️  UNO call integration test:', error.response?.data || error.message)
     // This might fail due to game state conditions
@@ -192,7 +192,7 @@ async function testUnoCallIntegration() {
 
 async function testChallengeHistory() {
   console.log('\n📚 Testing challenge history tracking...')
-  
+
   // The challenge history is tracked in memory in the service
   // In a real implementation, you might want to add an endpoint to retrieve it
   console.log('ℹ️  Challenge history is tracked internally in UnoChallengeService')
@@ -201,7 +201,7 @@ async function testChallengeHistory() {
 
 async function testRecursiveAndGeneratorFunctions() {
   console.log('\n🔄 Testing recursive and generator functions...')
-  
+
   console.log('ℹ️  UnoChallengeService includes:')
   console.log('   - processChallengesRecursive(): Processes multiple challenges in sequence')
   console.log('   - monitorChallengeOpportunities(): Generator for monitoring challenge opportunities')
@@ -211,7 +211,7 @@ async function testRecursiveAndGeneratorFunctions() {
 
 async function runAllTests() {
   console.log('🚀 Starting UNO Challenge System Tests\n')
-  
+
   try {
     await registerAndLoginUsers()
     await createAndSetupGame()
@@ -220,7 +220,7 @@ async function runAllTests() {
     await testUnoCallIntegration()
     await testChallengeHistory()
     await testRecursiveAndGeneratorFunctions()
-    
+
     console.log('\n🎉 All UNO Challenge System tests completed!')
     console.log('\n📋 Summary:')
     console.log('✅ UnoChallengeService created with full functionality')
@@ -232,7 +232,7 @@ async function runAllTests() {
     console.log('✅ Challenge history tracking implemented')
     console.log('✅ Penalty system (2 cards) implemented')
     console.log('✅ Turn progression after challenge implemented')
-    
+
   } catch (error) {
     console.error('\n❌ Test suite failed:', error.message)
     process.exit(1)

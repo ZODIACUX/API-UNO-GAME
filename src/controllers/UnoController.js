@@ -717,7 +717,7 @@ class UnoController {
   // 20. Desafiar UNO - NUEVO
   challengeUno = async (req, res) => {
     try {
-      const { challenger, challengedPlayer } = req.body
+      const { challenger: _challenger, challengedPlayer } = req.body
 
       // Simular lógica de desafío (en implementación real verificaría estado del juego)
       const challengeSuccessful = Math.random() > 0.5 // 50% probabilidad

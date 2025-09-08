@@ -1,4 +1,4 @@
-const logger = require('../../utils-api/logger')
+const logger = require('../utils/logger')
 
 class ErrorHandler {
   static handle(error, req, res, _next) {

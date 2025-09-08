@@ -243,7 +243,7 @@ class UnoChallengeService extends BaseService {
 
     const players = gamePlayersResult.value
     const currentIndex = players.findIndex(p => p.user.username === currentPlayer)
-    
+
     if (currentIndex === -1) {
       return players[0]?.user?.username || 'Player1'
     }

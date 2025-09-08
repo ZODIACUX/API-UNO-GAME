@@ -1,5 +1,5 @@
 const gameParticipantService = require('../services/gameParticipantService')
-const { handleResponse, handleError } = require('../utils-api/responseHelper')
+const { handleResponse, handleError } = require('../utils/responseHelper')
 
 class GameParticipantController {
   joinGame = async (req, res) => {

@@ -68,7 +68,7 @@ describe('Middleware Tests', () => {
       ]
 
       errors.forEach(({ message, expectedStatus }) => {
-        const error = new Error(message)
+        const _error = new Error(message)
         let status = 500
 
         if (message.includes('Validation')) status = 400

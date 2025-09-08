@@ -40,7 +40,7 @@ async function testValidChallengeFormat() {
     })
 
     console.log('✅ Challenge endpoint responded:', response.data)
-    
+
   } catch (error) {
     if (error.response) {
       console.log('ℹ️  Challenge endpoint response:', error.response.data)
@@ -59,7 +59,7 @@ async function testValidChallengeFormat() {
 
 async function testChallengeValidation() {
   console.log('Testing challenge validation...')
-  
+
   const invalidRequests = [
     { challengedPlayer: 'Player2' }, // Missing challenger
     { challenger: 'Player1' }, // Missing challenged player
@@ -86,13 +86,13 @@ async function testChallengeValidation() {
 async function testChallengeEndpointAccess() {
   try {
     // Test if the endpoint exists by making a request
-    const response = await axios.post(`${BASE_URL}/uno/challenge`, {
+    const _response = await axios.post(`${BASE_URL}/uno/challenge`, {
       challenger: 'TestChallenger',
       challengedPlayer: 'TestChallenged'
     })
-    
+
     console.log('✅ Challenge endpoint is accessible')
-    
+
   } catch (error) {
     if (error.response) {
       if (error.response.status === 404) {
@@ -118,13 +118,13 @@ function displayImplementationSummary() {
   console.log('   - processChallengesRecursive(): Recursive challenge processing')
   console.log('   - monitorChallengeOpportunities(): Generator for monitoring')
   console.log('   - monitorChallengeOpportunitiesRecursive(): Recursive monitoring')
-  
+
   console.log('\n✅ HTTP API Implementation:')
   console.log('   - POST /uno/challenge endpoint created')
   console.log('   - Challenge validation schema added')
   console.log('   - Route configuration updated')
   console.log('   - Integration with UnoCallService')
-  
+
   console.log('\n✅ Challenge System Features:')
   console.log('   - Validates challenge conditions')
   console.log('   - Checks if challenged player called UNO')
@@ -132,14 +132,14 @@ function displayImplementationSummary() {
   console.log('   - Tracks challenge history for audit')
   console.log('   - Handles turn progression after challenges')
   console.log('   - Integrates with existing game state management')
-  
+
   console.log('\n✅ Architecture Compliance:')
   console.log('   - Follows SOLID principles')
   console.log('   - Uses Result monad pattern for error handling')
   console.log('   - Maintains separation of concerns')
   console.log('   - Uses recursive functions and generators as required')
   console.log('   - Integrates with existing UNO call system')
-  
+
   console.log('\n🎮 UNO Challenge System (Requirement 5) Implementation Complete!')
   console.log('\n📋 API Usage:')
   console.log('   POST /uno/challenge')
@@ -151,7 +151,7 @@ function displayImplementationSummary() {
 // Test UNO call integration
 async function testUnoCallIntegration() {
   console.log('\n🔗 Testing UNO Call Integration')
-  
+
   try {
     // Test UNO call endpoint
     const unoResponse = await axios.patch(`${BASE_URL}/uno/call`, {

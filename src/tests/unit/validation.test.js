@@ -69,7 +69,7 @@ describe('Validation Tests', () => {
       const currentState = 'waiting'
       const newState = 'in_progress'
       const isValidTransition = validTransitions[currentState].includes(newState)
-      
+
       expect(isValidTransition).toBe(true)
     })
   })

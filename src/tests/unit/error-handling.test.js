@@ -3,13 +3,13 @@ describe('Error Handling Tests', () => {
   describe('HTTP Error Codes', () => {
     it('should return 400 for bad request', () => {
       const error = new Error('Invalid input data')
-      const statusCode = error.message.includes('invalid') ? 400 : 500
+      const statusCode = error.message.toLowerCase().includes('invalid') ? 400 : 500
       expect(statusCode).toBe(400)
     })
 
     it('should return 401 for unauthorized', () => {
       const error = new Error('Unauthorized access')
-      const statusCode = error.message.includes('unauthorized') ? 401 : 500
+      const statusCode = error.message.toLowerCase().includes('unauthorized') ? 401 : 500
       expect(statusCode).toBe(401)
     })
 
@@ -26,7 +26,7 @@ describe('Error Handling Tests', () => {
     })
 
     it('should return 500 for server error', () => {
-      const error = new Error('Database connection failed')
+      const _error = new Error('Database connection failed')
       const statusCode = 500
       expect(statusCode).toBe(500)
     })
@@ -64,7 +64,7 @@ describe('Error Handling Tests', () => {
   describe('Error Recovery', () => {
     it('should handle graceful degradation', () => {
       let fallbackUsed = false
-      
+
       try {
         throw new Error('Service unavailable')
       } catch (error) {

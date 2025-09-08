@@ -61,7 +61,7 @@ describe('Security Tests', () => {
     })
 
     it('should validate SQL injection prevention', () => {
-      const userInput = "'; DROP TABLE users; --"
+      const userInput = '\'; DROP TABLE users; --'
       const isSafe = !userInput.includes('DROP TABLE')
       expect(isSafe).toBe(false) // Should be detected as unsafe
     })

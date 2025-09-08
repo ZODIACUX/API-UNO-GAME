@@ -118,7 +118,7 @@ class CardPlayService extends BaseService {
   async buildGameState(game) {
     const players = {}
     const gamePlayersResult = await this.repository.getGamePlayers(game.id)
-    
+
     if (gamePlayersResult.isSuccess) {
       for (const gamePlayer of gamePlayersResult.value) {
         const playerHand = await this.getPlayerHand(game.id, gamePlayer.user.username)
@@ -376,7 +376,7 @@ class CardPlayService extends BaseService {
     try {
       // Import UnoCallService - in production should use DI container
       const UnoCallService = require('./UnoCallService')
-      
+
       // Create service instance
       const unoCallService = new UnoCallService(
         this.repository,

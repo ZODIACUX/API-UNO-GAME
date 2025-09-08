@@ -138,7 +138,7 @@ async function testUnoChallengeSystem() {
     const challenges = [
       { gameId: 1, challenger: 'Player3', challengedPlayer: 'Player1' }
     ]
-    
+
     const recursiveResult = await unoChallengeService.processChallengesRecursive(challenges)
     if (recursiveResult.isSuccess) {
       console.log('✅ Recursive challenge processing works')

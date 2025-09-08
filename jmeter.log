@@ -1,0 +1,53 @@
+2025-09-07 21:31:21,626 INFO o.a.j.u.JMeterUtils: Setting Locale to en_EN
+2025-09-07 21:31:21,655 INFO o.a.j.JMeter: Loading user properties from: C:\apache-jmeter\bin\user.properties
+2025-09-07 21:31:21,656 INFO o.a.j.JMeter: Loading system properties from: C:\apache-jmeter\bin\system.properties
+2025-09-07 21:31:21,663 INFO o.a.j.JMeter: Copyright (c) 1998-2024 The Apache Software Foundation
+2025-09-07 21:31:21,663 INFO o.a.j.JMeter: Version 5.6.3
+2025-09-07 21:31:21,663 INFO o.a.j.JMeter: java.version=21.0.7
+2025-09-07 21:31:21,663 INFO o.a.j.JMeter: java.vm.name=OpenJDK 64-Bit Server VM
+2025-09-07 21:31:21,664 INFO o.a.j.JMeter: os.name=Windows 11
+2025-09-07 21:31:21,664 INFO o.a.j.JMeter: os.arch=amd64
+2025-09-07 21:31:21,664 INFO o.a.j.JMeter: os.version=10.0
+2025-09-07 21:31:21,664 INFO o.a.j.JMeter: file.encoding=UTF-8
+2025-09-07 21:31:21,664 INFO o.a.j.JMeter: java.awt.headless=true
+2025-09-07 21:31:21,664 INFO o.a.j.JMeter: Max memory     =1073741824
+2025-09-07 21:31:21,664 INFO o.a.j.JMeter: Available Processors =16
+2025-09-07 21:31:21,675 INFO o.a.j.JMeter: Default Locale=English (EN)
+2025-09-07 21:31:21,675 INFO o.a.j.JMeter: JMeter  Locale=English (EN)
+2025-09-07 21:31:21,675 INFO o.a.j.JMeter: JMeterHome=C:\apache-jmeter
+2025-09-07 21:31:21,675 INFO o.a.j.JMeter: user.dir  =D:\PROYECTOS\JALAU\PROGRA4\CAPSTONE
+2025-09-07 21:31:21,676 INFO o.a.j.JMeter: PWD       =D:\PROYECTOS\JALAU\PROGRA4\CAPSTONE
+2025-09-07 21:31:21,678 INFO o.a.j.JMeter: IP: 192.168.1.42 Name: ZODIACO-DEV-W11 FullName: host.docker.internal
+2025-09-07 21:31:21,692 INFO o.a.j.s.FileServer: Default base='D:\PROYECTOS\JALAU\PROGRA4\CAPSTONE'
+2025-09-07 21:31:21,706 INFO o.a.j.s.FileServer: Set new base='D:\PROYECTOS\JALAU\PROGRA4\CAPSTONE'
+2025-09-07 21:31:22,056 INFO o.a.j.s.SaveService: Testplan (JMX) version: 2.2. Testlog (JTL) version: 2.2
+2025-09-07 21:31:22,096 INFO o.a.j.s.SaveService: Using SaveService properties version 5.0
+2025-09-07 21:31:22,099 INFO o.a.j.s.SaveService: Using SaveService properties file encoding UTF-8
+2025-09-07 21:31:22,104 INFO o.a.j.s.SaveService: Loading file: jmeter-test-plan-uno-api.jmx
+2025-09-07 21:31:22,146 INFO o.a.j.p.h.c.CookieManager: Settings: Delete null: true Check: true Allow variable: true Save: false Prefix: COOKIE_
+2025-09-07 21:31:22,178 INFO o.a.j.p.h.s.HTTPSamplerBase: Parser for text/html is org.apache.jmeter.protocol.http.parser.LagartoBasedHtmlParser
+2025-09-07 21:31:22,179 INFO o.a.j.p.h.s.HTTPSamplerBase: Parser for application/xhtml+xml is org.apache.jmeter.protocol.http.parser.LagartoBasedHtmlParser
+2025-09-07 21:31:22,179 INFO o.a.j.p.h.s.HTTPSamplerBase: Parser for application/xml is org.apache.jmeter.protocol.http.parser.LagartoBasedHtmlParser
+2025-09-07 21:31:22,179 INFO o.a.j.p.h.s.HTTPSamplerBase: Parser for text/xml is org.apache.jmeter.protocol.http.parser.LagartoBasedHtmlParser
+2025-09-07 21:31:22,179 INFO o.a.j.p.h.s.HTTPSamplerBase: Parser for text/vnd.wap.wml is org.apache.jmeter.protocol.http.parser.RegexpHTMLParser
+2025-09-07 21:31:22,179 INFO o.a.j.p.h.s.HTTPSamplerBase: Parser for text/css is org.apache.jmeter.protocol.http.parser.CssParser
+2025-09-07 21:31:22,228 INFO o.a.j.JMeter: Creating summariser <summary>
+2025-09-07 21:31:22,229 ERROR o.a.j.JMeter: Error in NonGUIDriver
+java.lang.ArrayIndexOutOfBoundsException: Index 0 out of bounds for length 0
+	at org.apache.jmeter.JMeter.runNonGui(JMeter.java:985) [ApacheJMeter_core.jar:5.6.3]
+	at org.apache.jmeter.JMeter.startNonGui(JMeter.java:940) [ApacheJMeter_core.jar:5.6.3]
+	at org.apache.jmeter.JMeter.start(JMeter.java:508) [ApacheJMeter_core.jar:5.6.3]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[?:?]
+	at org.apache.jmeter.NewDriver.main(NewDriver.java:259) [ApacheJMeter.jar:5.6.3]
+2025-09-07 21:31:22,249 ERROR o.a.j.JMeter: An error occurred: 
+org.apache.jmeter.report.config.ConfigurationException: Error in NonGUIDriver Index 0 out of bounds for length 0
+	at org.apache.jmeter.JMeter.runNonGui(JMeter.java:1049) ~[ApacheJMeter_core.jar:5.6.3]
+	at org.apache.jmeter.JMeter.startNonGui(JMeter.java:940) ~[ApacheJMeter_core.jar:5.6.3]
+	at org.apache.jmeter.JMeter.start(JMeter.java:508) [ApacheJMeter_core.jar:5.6.3]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[?:?]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[?:?]
+	at org.apache.jmeter.NewDriver.main(NewDriver.java:259) [ApacheJMeter.jar:5.6.3]
+Caused by: java.lang.ArrayIndexOutOfBoundsException: Index 0 out of bounds for length 0
+	at org.apache.jmeter.JMeter.runNonGui(JMeter.java:985) ~[ApacheJMeter_core.jar:5.6.3]
+	... 5 more
